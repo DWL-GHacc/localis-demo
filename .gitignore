@@ -138,5 +138,11 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-**/node_modules/
+# Node
+/node_modules/
 client/build/
+
+# Env
+.env
+.env.local
+.env.*.local
