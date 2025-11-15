@@ -1,99 +1,75 @@
+// server/routes/users.js
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const knex = require('../db');
+const auth = require('../middleware/auth');
+
 const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET;
+const TOKEN_EXPIRY = 60 * 60 * 24;
 
-//Login Route
-//POST /user/login  URL https://localhost:3000/users/login
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+// REGISTER
+router.post('/register', async (req, res) => {
+  const { email, password, full_name } = req.body;
 
-  // 400 - missing input
-  if (!email || !password) {
-    return res.status(400).json({
-      error: true,
-      message: "Request body incomplete, both email and password are required"
-    });
-  }
+  if (!email || !password)
+    return res.status(400).json({ error: true, message: 'Email and password required' });
 
   try {
-    const user = await knex('users').where({ email }).first();
+    const existing = await knex('users').where({ email }).first();
+    if (existing) return res.status(409).json({ error: true, message: 'Email already exists' });
 
-    // 401 - user not found or password mismatch
-    if (!user || !(await bcrypt.compare(password, user.hash))) {
-      return res.status(401).json({
-        error: true,
-        message: "Incorrect email or password"
-      });
-    }
+    const hash = await bcrypt.hash(password, 10);
 
-    const expires_in = 60 * 60 * 24; // 24 hours
-    const exp = Math.floor(Date.now() / 1000) + expires_in;
-    const token = jwt.sign({ email, exp }, process.env.JWT_SECRET);
-
-    res
-      .cookie('token', token, {
-        httpOnly: true,
-        maxAge: expires_in * 1000,
-        secure: true,
-        sameSite: 'strict'
-      })
-      .status(200)
-      .json({
-        token,
-        token_type: "Bearer",
-        expires_in
-      });
-
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({
-      error: true,
-      message: "Login failed due to server error"
+    const [id] = await knex('users').insert({
+      email,
+      password_hash: hash,
+      full_name,
+      role: 'user'
     });
+
+    const exp = Math.floor(Date.now() / 1000) + TOKEN_EXPIRY;
+    const token = jwt.sign({ id, email, exp }, JWT_SECRET);
+
+    res.status(201).json({ error: false, token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: true, message: 'Server error' });
   }
 });
 
-//Registration Route
-//POST /user/register   URL-https://localhost:3000/users/register
-router.post('/register', async (req, res) => {
+// LOGIN
+router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  console.log(`Registration attempt for email: ${email}`);
 
-  if (!email || !password) {
-    console.log('Registration failed: missing fields');
-    return res.status(400).json({
-      error: true,
-      message: "Email and password required"
-    });
-  }
+  if (!email || !password)
+    return res.status(400).json({ error: true, message: 'Missing email or password' });
 
   try {
-    const existingUser = await knex('users').where({ email }).first();
-    if (existingUser) {
-      console.log('Registration failed: user already exists');
-      return res.status(409).json({
-        error: true,
-        message: "User already exists"
-      });
-    }
+    const user = await knex('users').where({ email }).first();
+    if (!user) return res.status(401).json({ error: true, message: 'Invalid credentials' });
 
-    const hash = await bcrypt.hash(password, 10);
-    await knex('users').insert({ email, hash });
+    const match = await bcrypt.compare(password, user.password_hash);
+    if (!match) return res.status(401).json({ error: true, message: 'Invalid credentials' });
 
-    console.log(`User created: ${email}`);
-    res.status(201).json({
-      success: true,
-      message: "User created"
-    });
+    const exp = Math.floor(Date.now() / 1000) + TOKEN_EXPIRY;
+    const token = jwt.sign({ id: user.id, email, exp }, JWT_SECRET);
+
+    res.json({ error: false, token });
   } catch (err) {
-    console.error('Registration error:', err);
-    res.status(500).json({
-      error: true,
-      message: "Registration failed"
-    });
+    res.status(500).json({ error: true, message: 'Server error' });
   }
+});
+
+// PROTECTED PROFILE
+router.get('/profile', auth, async (req, res) => {
+  const user = await knex('users')
+    .select('email', 'full_name', 'role', 'is_active')
+    .where({ id: req.user.id })
+    .first();
+
+  res.json({ user });
 });
 
 module.exports = router;
