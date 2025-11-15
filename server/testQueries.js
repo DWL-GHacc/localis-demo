@@ -1,34 +1,44 @@
 // server/testQueries.js
-import fs from "fs";
 import {
-  getAllSpendData,
-  getSpendByLGA,
-  getHistoricalOccupancyByLGA,
-  getLengthOfStayByLGA,
+  getRecentSpend,
+  getSpendByRegionAndDate,
+  getSpendSummaryByRegion,
+  getHistoricalByLGA,
+  getLengthDataByLGA,
 } from "./queries/localisQueries.js";
 
 async function run() {
   try {
-    const lga = "YOUR_LGA_NAME_HERE"; // change to a real LGA
+    const TEST_REGION = "Gold Coast";
+    const TEST_LGA = "Gold Coast";
 
-    const spend = await getSpendByLGA(lga);
-    console.log("Spend data:", spend);
+    console.log("=== Recent spend ===");
+    const recentSpend = await getRecentSpend(5);
+    console.log(JSON.stringify(recentSpend, null, 2));
 
-    const hist = await getHistoricalOccupancyByLGA(lga);
-    console.log("Historical occupancy:", hist);
-
-    const los = await getLengthOfStayByLGA(lga);
-    console.log("Length of stay:", los);
-
-    // If you want to write to a JSON file:
-    const exportObj = { lga, spend, hist, los };
-    fs.writeFileSync(
-      "./server/export-lga-data.json",
-      JSON.stringify(exportObj, null, 2)
+    console.log("\n=== Spend by region and date range (Gold Coast, 2022) ===");
+    const spendByRegion = await getSpendByRegionAndDate(
+      TEST_REGION,
+      "2022-01-01",
+      "2022-12-31"
     );
-    console.log("✅ Exported to server/export-lga-data.json");
+    console.log(JSON.stringify(spendByRegion, null, 2));
+
+    console.log("\n=== Spend summary by region/category ===");
+    const spendSummary = await getSpendSummaryByRegion();
+    console.log(JSON.stringify(spendSummary, null, 2));
+
+    console.log(`\n=== Historical by LGA: ${TEST_LGA} ===`);
+    const historical = await getHistoricalByLGA(TEST_LGA);
+    console.log(JSON.stringify(historical, null, 2));
+
+    console.log(`\n=== Length of stay by LGA: ${TEST_LGA} ===`);
+    const lengthData = await getLengthDataByLGA(TEST_LGA);
+    console.log(JSON.stringify(lengthData, null, 2));
+
   } catch (err) {
-    console.error("Test query failed:", err.message);
+    console.error("❌ Test queries failed:");
+    console.error(err);
   }
 }
 

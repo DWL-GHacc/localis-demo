@@ -1,45 +1,112 @@
 // server/queries/localisQueries.js
 import { dbQuery } from "../dbConnection.js";
 
-// Example: get all spend rows (limit to stop accidental giant dumps)
-export async function getAllSpendData(limit = 100) {
-  const sql = "SELECT * FROM spend_data LIMIT ?";
-  const rows = await dbQuery(sql, [limit]);
-  return rows; // JSON-ready
-}
+/**
+ * SPEND DATA
+ */
 
-// Example: get spend data for a specific LGA
-export async function getSpendByLGA(lgaName, limit = 100) {
+// Get most recent spend rows (for quick testing)
+export async function getRecentSpend(limit = 20) {
   const sql = `
-    SELECT *
+    SELECT 
+      id,
+      spend,
+      cards_seen,
+      no_txns,
+      spend_date,
+      region,
+      category
     FROM spend_data
-    WHERE lga_name = ?
+    ORDER BY spend_date DESC, id DESC
     LIMIT ?
   `;
-  const rows = await dbQuery(sql, [lgaName, limit]);
-  return rows;
+  return dbQuery(sql, [limit]);
 }
 
-// Example: get historical occupancy & ADR
-export async function getHistoricalOccupancyByLGA(lgaName) {
-  const sql = `
-    SELECT *
-    FROM historical_occupancy
-    WHERE lga_name = ?
-    ORDER BY hist_date;
+// Get spend filtered by region and optional date range
+export async function getSpendByRegionAndDate(
+  region,
+  startDate = null,
+  endDate = null
+) {
+  let sql = `
+    SELECT 
+      id,
+      spend,
+      cards_seen,
+      no_txns,
+      spend_date,
+      region,
+      category
+    FROM spend_data
+    WHERE region = ?
   `;
-  const rows = await dbQuery(sql, [lgaName]);
-  return rows;
+  const params = [region];
+
+  if (startDate) {
+    sql += " AND spend_date >= ?";
+    params.push(startDate);
+  }
+  if (endDate) {
+    sql += " AND spend_date <= ?";
+    params.push(endDate);
+  }
+
+  sql += " ORDER BY spend_date ASC, id ASC";
+
+  return dbQuery(sql, params);
 }
 
-// Example: get length of stay & booking window
-export async function getLengthOfStayByLGA(lgaName) {
+// Example aggregation: total spend per region per category
+export async function getSpendSummaryByRegion() {
   const sql = `
-    SELECT *
-    FROM length_of_stay
-    WHERE lga_name = ?
-    ORDER BY date_length;
+    SELECT 
+      region,
+      category,
+      SUM(spend) AS total_spend,
+      SUM(cards_seen) AS total_cards_seen,
+      SUM(no_txns) AS total_txns
+    FROM spend_data
+    GROUP BY region, category
+    ORDER BY region, category;
   `;
-  const rows = await dbQuery(sql, [lgaName]);
-  return rows;
+  return dbQuery(sql);
+}
+
+/**
+ * HISTORICAL OCCUPANCY DATA
+ */
+
+export async function getHistoricalByLGA(lgaName) {
+  const sql = `
+    SELECT 
+      id,
+      hist_date,
+      lga_name,
+      average_historical_occupancy,
+      average_daily_rate
+    FROM historical
+    WHERE lga_name = ?
+    ORDER BY hist_date ASC, id ASC;
+  `;
+  return dbQuery(sql, [lgaName]);
+}
+
+/**
+ * LENGTH OF STAY DATA
+ */
+
+export async function getLengthDataByLGA(lgaName) {
+  const sql = `
+    SELECT 
+      id,
+      date_length,
+      lga_name,
+      average_length_of_stay,
+      average_booking_window
+    FROM length_data
+    WHERE lga_name = ?
+    ORDER BY date_length ASC, id ASC;
+  `;
+  return dbQuery(sql, [lgaName]);
 }
