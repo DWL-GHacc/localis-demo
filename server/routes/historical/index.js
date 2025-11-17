@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authorization = require("../../middleware/authorization");
 
+// Get all historical data
 router.get("/", async (req, res, next) => {
   req.db
     .from("historical")
@@ -21,6 +22,7 @@ router.get("/", async (req, res, next) => {
     });
 });
 
+// Get data range for historical data
 router.get("/data_range", async (req, res, next)=> {
     req.db
       .from("historical")
@@ -35,6 +37,7 @@ router.get("/data_range", async (req, res, next)=> {
       });
 });
 
+// Get average rates joined with length of stay and booking window
 router.get("/average_rates", async (req, res, next) => {
   try {
     const rows = await req
@@ -68,6 +71,7 @@ router.get("/average_rates", async (req, res, next) => {
   }
 });
 
+// Get distinct LGA names from historical data
 router.get("/distinct_lgas_historical", async (req, res, next) => {
   req.db
     .from("historical")
@@ -82,6 +86,7 @@ router.get("/distinct_lgas_historical", async (req, res, next) => {
     });
 });
 
+// Get monthly occupancy and ADR per LGA
 router.get("/monthly_occupancy_ADR_per_LGA", async (req, res, next) => {
     req.db
     .from("historical")
@@ -107,6 +112,7 @@ router.get("/monthly_occupancy_ADR_per_LGA", async (req, res, next) => {
     });
 });
 
+// Get historical occupancy and length of stay for a single LGA
 router.get("/single_LGA_histOcc_LOS", async (req, res, next) => {
 //   const  lga  = req.query;
 //   console.log("LGA selected", lga);
