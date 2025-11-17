@@ -39,7 +39,8 @@ router.post('/register', async (req, res) => {
       email,
       password_hash,
       full_name: full_name || null,
-      role: role || 'user'
+      role: role || 'user',
+      is_active: 0
       // is_active, created_at, updated_at all use defaults
     });
 

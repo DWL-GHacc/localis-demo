@@ -2,27 +2,36 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-
+import usersRouter from "./routes/users.js";
 import lgaRouter from "./routes/lgaRoutes.js";
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());            // Allow client (React) to call this API
-app.use(express.json());    // Parse JSON bodies
-
-// Simple health check
+app.use(cors());
+app.use(express.json());
+app.use("/api/users", usersRouter);
+// Root test
 app.get("/", (req, res) => {
-  res.json({ status: "ok", message: "Localis API is running" });
+  res.json({ status: "ok", message: "Localis API running" });
 });
 
-// Mount routes
+// API health test
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    route: "/api/health",
+    server: "Localis API",
+    port: PORT,
+    time: new Date().toISOString(),
+  });
+});
+
+// 🔗 Mount all LGA-related routes under /api
 app.use("/api", lgaRouter);
 
-// Start server
 app.listen(PORT, () => {
   console.log(`🚀 Localis API listening on http://localhost:${PORT}`);
 });
