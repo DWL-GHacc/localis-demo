@@ -5,6 +5,8 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 const options = require("./knexfile.js");
 const knex = require("knex")(options);
+require("dotenv").config();
+const authorization = require("./middleware/authorization");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users.js");
