@@ -8,10 +8,9 @@ router.get("/", function (req, res, next) {
 
 
 // middleware routes
-router.use("/api/historical", require("./historical/index.js"));
-router.use("/api/length_data", require("./length/index.js"));
-router.use("/api/spend_data", require("./spend/index.js"));
-router.use("/api/users", require("./users.js"));
+router.use("/historical", require("./historical/index.js"));
+router.use("/length_data", require("./length/index.js"));
+router.use("/spend_data", require("./spend/index.js"));
 
 
 module.exports = router;
