@@ -1,11 +1,13 @@
 // server/queries/localisQueries.js
-import knex from "../db.js";
+// import knex from "../db.js";
+
+const knex = require("../db");
 
 /**
  * Get the most recent spend records ordered by spend_date DESC.
  * limit is the maximum number of rows to return.
  */
-export async function getRecentSpend(limit = 10) {
+async function getRecentSpend(limit = 10) {
   const safeLimit = Number.isNaN(Number(limit)) ? 10 : Number(limit);
 
   const rows = await knex("spend_data")
@@ -20,7 +22,7 @@ export async function getRecentSpend(limit = 10) {
  * Get spend data for a specific region, optionally filtered by date range.
  * start / end are 'YYYY-MM-DD' strings (or null / undefined).
  */
-export async function getSpendByRegionAndDate(region, start = null, end = null) {
+async function getSpendByRegionAndDate(region, start = null, end = null) {
   let query = knex("spend_data")
     .select("id", "spend", "cards_seen", "no_txns", "spend_date", "region", "category")
     .where("region", region);
@@ -44,7 +46,7 @@ export async function getSpendByRegionAndDate(region, start = null, end = null) 
  *  - total_transactions: SUM(no_txns)
  *  - days: COUNT(id) (number of daily rows for that region)
  */
-export async function getSpendSummaryByRegion() {
+async function getSpendSummaryByRegion() {
   const rows = await knex("spend_data")
     .select("region")
     .sum({ total_spend: "spend" })
@@ -65,7 +67,7 @@ export async function getSpendSummaryByRegion() {
  *  - average_historical_occupancy (double)
  *  - average_daily_rate (double)
  */
-export async function getHistoricalByLGA(lgaName) {
+async function getHistoricalByLGA(lgaName) {
   const rows = await knex("historical")
     .select(
       "lga_name",
@@ -88,7 +90,7 @@ export async function getHistoricalByLGA(lgaName) {
  *  - average_length_of_stay (double)
  *  - average_booking_window (double)
  */
-export async function getLengthDataByLGA(lgaName) {
+async function getLengthDataByLGA(lgaName) {
   const rows = await knex("length_data")
     .select(
       "lga_name",
@@ -103,3 +105,9 @@ export async function getLengthDataByLGA(lgaName) {
   return rows;
 }
 
+
+exports.getRecentSpend = getRecentSpend;
+exports.getSpendByRegionAndDate = getSpendByRegionAndDate;
+exports.getSpendSummaryByRegion = getSpendSummaryByRegion;
+exports.getHistoricalByLGA = getHistoricalByLGA;
+exports.getLengthDataByLGA = getLengthDataByLGA;  
