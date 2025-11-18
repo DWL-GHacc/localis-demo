@@ -1,6 +1,9 @@
 // server/db.js
-import dotenv from "dotenv";
-import knex from "knex";
+
+const dotenv = require("dotenv");
+const knex = require("knex");
+// import dotenv from "dotenv";
+// import knex from "knex";
 
 dotenv.config();
 
@@ -16,4 +19,5 @@ const db = knex({
   pool: { min: 0, max: 10 },
 });
 
-export default db;
+module.exports = db;
+// export default db;

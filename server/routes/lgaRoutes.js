@@ -1,12 +1,21 @@
 // server/routes/lgaRoutes.js
-import express from "express";
-import {
+// import express from "express";
+// import {
+//   getRecentSpend,
+//   getSpendByRegionAndDate,
+//   getSpendSummaryByRegion,
+//   getHistoricalByLGA,
+//   getLengthDataByLGA,
+// } from "../queries/localisQueries.js";
+
+const express = require("express");
+const {
   getRecentSpend,
   getSpendByRegionAndDate,
   getSpendSummaryByRegion,
   getHistoricalByLGA,
   getLengthDataByLGA,
-} from "../queries/localisQueries.js";
+} = require("../queries/localisQueries");
 
 const router = express.Router();
 
@@ -81,4 +90,5 @@ router.get("/spend/recent", async (req, res) => {
 
 
 // 👈 THIS is what your server.js is trying to import
-export default router;
+// export default router;
+module.exports = router;

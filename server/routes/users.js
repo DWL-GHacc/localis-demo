@@ -1,8 +1,13 @@
 // server/routes/users.js
-import express from "express";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import knex from "../db.js";
+// import express from "express";
+// import bcrypt from "bcrypt";
+// import jwt from "jsonwebtoken";
+// import knex from "../db.js";
+
+const express = require("express");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const knex = require("../db");
 
 const router = express.Router();
 const SALT_ROUNDS = 10;
@@ -144,4 +149,5 @@ router.post("/login", async (req, res) => {
   }
 });
 
-export default router;
+// export default router;
+module.exports = router;
