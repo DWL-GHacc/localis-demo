@@ -1,102 +1,93 @@
 // server/routes/users.js
-// import express from "express";
-// import bcrypt from "bcrypt";
-// import jwt from "jsonwebtoken";
-// import knex from "../db.js";
-
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const knex = require("../db");
+const { authenticateToken, requireAdmin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
+
 const SALT_ROUNDS = 10;
+const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
-// Generate a signed JWT token
+// Helper - ONLY used for login
 function generateToken(user) {
-  const payload = {
-    sub: user.id,
-    email: user.email,
-    role: user.role
-  };
-
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "1d",
-  });
+  return jwt.sign(
+    {
+      sub: user.id,
+      email: user.email,
+      role: user.role
+    },
+    JWT_SECRET,
+    { expiresIn: "1d" }
+  );
 }
 
-/**
- * POST /api/users/register
- */
+// ------------------------------------------------------------
+// REGISTER - no token issued, user starts inactive
+// ------------------------------------------------------------
 router.post("/register", async (req, res) => {
   const { email, password, full_name } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({
       error: true,
-      message: "Request body incomplete, both email and password are required",
+      message: "Email and password are required"
     });
   }
 
   try {
-    // Check if user already exists
     const existing = await knex("users").where({ email }).first();
     if (existing) {
       return res.status(409).json({
         error: true,
-        message: "User already exists",
+        message: "User with this email already exists"
       });
     }
 
-    // Hash password
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    // Insert user (role defaults to 'user', is_active defaults to 1)
-    const insertData = {
-      email,
-      password_hash,
-      full_name: full_name || null,
-    };
+    const [insertId] = await knex("users").insert(
+      {
+        email,
+        password_hash,
+        full_name: full_name || null,
+        role: "user",
+        is_active: 0
+      }
+    );
 
-    const result = await knex("users").insert(insertData);
-    const userId = Array.isArray(result) ? result[0] : result;
-
-    const user = {
-      id: userId,
-      email,
-      full_name: full_name || null,
-      role: "user",
-      is_active: 0,
-    };
-
-    const token = generateToken(user);
-
-    res.status(201).json({
-      success: true,
-      message: "User registered",
-      token,
-      user
+    return res.status(201).json({
+      error: false,
+      message:
+        "Registration successful. An administrator must activate this account before login.",
+      user: {
+        id: insertId,
+        email,
+        full_name: full_name || null,
+        role: "user",
+        is_active: 0
+      }
     });
-
   } catch (err) {
-    console.error("Error in /api/users/register:", err);
-    res.status(500).json({
+    console.error("Error during registration:", err);
+    return res.status(500).json({
       error: true,
-      message: "Failed to register user",
+      message: "Database error during registration"
     });
   }
 });
 
-/**
- * POST /api/users/login
- */
+// ------------------------------------------------------------
+// LOGIN
+// ------------------------------------------------------------
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({
       error: true,
-      message: "Email and password required",
+      message: "Email and password are required"
     });
   }
 
@@ -109,45 +100,179 @@ router.post("/login", async (req, res) => {
     if (!user) {
       return res.status(401).json({
         error: true,
-        message: "Incorrect email or password",
+        message: "Incorrect email or password"
       });
     }
 
     if (!user.is_active) {
       return res.status(403).json({
         error: true,
-        message: "User account is inactive",
+        message: "Your account is not yet activated by an administrator"
       });
     }
 
-    // Validate password
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
       return res.status(401).json({
         error: true,
-        message: "Incorrect email or password",
+        message: "Incorrect email or password"
       });
     }
 
     const token = generateToken(user);
 
-    const { password_hash, ...safeUser } = user;
+    delete user.password_hash;
 
-    res.json({
-      success: true,
+    return res.status(200).json({
+      error: false,
       message: "Login successful",
       token,
-      user: safeUser
+      user
     });
-
   } catch (err) {
-    console.error("Error in /api/users/login:", err);
-    res.status(500).json({
+    console.error("Error during login:", err);
+    return res.status(500).json({
       error: true,
-      message: "Login failed",
+      message: "Database error during login"
     });
   }
 });
 
-// export default router;
+// ------------------------------------------------------------
+// ADMIN: ACTIVATE USER
+// PATCH /api/users/:id/activate
+// ------------------------------------------------------------
+router.patch("/:id/activate",
+  authenticateToken,
+  requireAdmin,
+  async (req, res) => {
+    const userId = parseInt(req.params.id);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        error: true,
+        message: "Invalid user ID"
+      });
+    }
+
+    try {
+      const user = await knex("users")
+        .select("id", "email", "full_name", "role", "is_active")
+        .where({ id: userId })
+        .first();
+
+      if (!user) {
+        return res.status(404).json({
+          error: true,
+          message: "User not found"
+        });
+      }
+
+      await knex("users")
+        .where({ id: userId })
+        .update({ is_active: 1 });
+
+      const updated = await knex("users")
+        .select("id", "email", "full_name", "role", "is_active")
+        .where({ id: userId })
+        .first();
+
+      return res.json({
+        error: false,
+        message: "User activated successfully",
+        user: updated
+      });
+    } catch (err) {
+      console.error("Error activating user:", err);
+      return res.status(500).json({
+        error: true,
+        message: "Database error during activation"
+      });
+    }
+  }
+);
+// ------------------------------------------------------------
+// ADMIN: DEACTIVATE USER
+// PATCH /api/users/:id/deactivate
+// ------------------------------------------------------------
+router.patch(
+  "/:id/deactivate",
+  authenticateToken,
+  requireAdmin,
+  async (req, res) => {
+    const userId = parseInt(req.params.id, 10);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        error: true,
+        message: "Invalid user ID"
+      });
+    }
+
+    try {
+      const user = await knex("users")
+        .select("id", "email", "full_name", "role", "is_active")
+        .where({ id: userId })
+        .first();
+
+      if (!user) {
+        return res.status(404).json({
+          error: true,
+          message: "User not found"
+        });
+      }
+
+      await knex("users")
+        .where({ id: userId })
+        .update({ is_active: 0 });
+
+      const updated = await knex("users")
+        .select("id", "email", "full_name", "role", "is_active")
+        .where({ id: userId })
+        .first();
+
+      return res.json({
+        error: false,
+        message: "User deactivated successfully",
+        user: updated
+      });
+    } catch (err) {
+      console.error("Error deactivating user:", err);
+      return res.status(500).json({
+        error: true,
+        message: "Database error during deactivation"
+      });
+    }
+  }
+);
+// ------------------------------------------------------------
+// ADMIN: LIST INACTIVE USERS (Pending Approval)
+// GET /api/users/pending
+// ------------------------------------------------------------
+router.get(
+  "/pending",
+  authenticateToken,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const pendingUsers = await knex("users")
+        .select("id", "email", "full_name", "role", "is_active")
+        .where({ is_active: 0 })
+        .orderBy("id", "asc");
+
+      return res.json({
+        error: false,
+        count: pendingUsers.length,
+        users: pendingUsers
+      });
+    } catch (err) {
+      console.error("Error fetching pending users:", err);
+      return res.status(500).json({
+        error: true,
+        message: "Database error while fetching pending users"
+      });
+    }
+  }
+);
+
 module.exports = router;
