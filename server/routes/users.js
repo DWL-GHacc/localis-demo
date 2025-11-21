@@ -8,7 +8,11 @@ const { authenticateToken, requireAdmin } = require("../middleware/authMiddlewar
 const router = express.Router();
 
 const SALT_ROUNDS = 10;
-const JWT_SECRET = process.env.JWT_SECRET || "changeme";
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error("Missing JWT_SECRET in environment variables");
+}
 
 // Helper - ONLY used for login
 function generateToken(user) {
