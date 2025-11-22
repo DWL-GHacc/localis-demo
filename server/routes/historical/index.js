@@ -114,14 +114,14 @@ router.get("/monthly_occupancy_ADR_per_LGA", async (req, res, next) => {
 
 // Get historical occupancy and length of stay for a single LGA
 router.get("/single_LGA_histOcc_LOS", async (req, res, next) => {
-//   const  lga  = req.query;
-//   console.log("LGA selected", lga);
+  const  {lga_name}  = req.query;
+  console.log("LGA selected", lga_name);
 
-const lga = "Gold Coast";  // For testing purpose
+// const lga = "Gold Coast";  // For testing purpose
 // frontend request URL example:
 // http://localhost:3000/historical/single_LGA_histOcc_LOS?lga_name=Gold%20Coast
 
-  if(!lga){
+  if(!lga_name){
     return res.status(400).json({ Error: true, Message: "Missing lga_name" });
   }
 
@@ -143,7 +143,7 @@ const lga = "Gold Coast";  // For testing purpose
       req.db.raw("AVG(l.average_length_of_stay) AS avg_length_of_stay"),
       req.db.raw("AVG(l.average_booking_window) AS avg_booking_window")
     )
-    .where("h.lga_name", lga)
+    .where("h.lga_name", lga_name)
     .groupBy("h.lga_name")
     .groupByRaw("YEAR(h.hist_date), MONTH(h.hist_date)")
     .orderBy(["year", "month"])
