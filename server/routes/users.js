@@ -496,5 +496,91 @@ router.get(
     }
   }
 );
+// ------------------------------------------------------------
+// ADMIN: UPDATE USER (full_name, role only)
+// PATCH /api/users/:id/update
+// Body: { full_name?, role? }
+// ------------------------------------------------------------
+router.patch(
+  "/:id/update",
+  authenticateToken,
+  requireAdmin,
+  async (req, res) => {
+    const userId = parseInt(req.params.id, 10);
+    const { full_name, role } = req.body;
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        error: true,
+        message: "Invalid user ID"
+      });
+    }
+
+    // Build update object from only allowed fields
+    const updateData = {};
+
+    if (typeof full_name !== "undefined") {
+      updateData.full_name = full_name;
+    }
+
+    if (typeof role !== "undefined") {
+      const allowedRoles = ["user", "admin"];
+      if (!allowedRoles.includes(role)) {
+        return res.status(400).json({
+          error: true,
+          message: `Invalid role. Allowed roles: ${allowedRoles.join(", ")}`
+        });
+      }
+      updateData.role = role;
+    }
+
+    // Must update at least one allowed field
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        error: true,
+        message: "No valid fields (full_name or role) provided to update"
+      });
+    }
+
+    try {
+      // Ensure user exists
+      const user = await knex("users")
+        .select("id", "email", "full_name", "role", "is_active")
+        .where({ id: userId })
+        .first();
+
+      if (!user) {
+        return res.status(404).json({
+          error: true,
+          message: "User not found"
+        });
+      }
+
+      // Perform update
+      await knex("users")
+        .where({ id: userId })
+        .update(updateData);
+
+      // Return the updated user object
+      const updated = await knex("users")
+        .select("id", "email", "full_name", "role", "is_active")
+        .where({ id: userId })
+        .first();
+
+      return res.json({
+        error: false,
+        message: "User details updated successfully",
+        user: updated
+      });
+    } catch (err) {
+      console.error("Error updating user details:", err);
+      return res.status(500).json({
+        error: true,
+        message: "Database error while updating user"
+      });
+    }
+  }
+);
+
 
 module.exports = router;

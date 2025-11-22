@@ -359,6 +359,8 @@ const Register = ({ onSuccess }) => {
   );
 };
 
+
+
 // -------------------- USER ADMIN PAGE --------------------
 
 const UserAdmin = () => {
@@ -367,6 +369,14 @@ const UserAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
+
+  // NEW: edit modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editForm, setEditForm] = useState({
+    full_name: "",
+    role: "user",
+  });
 
   const extractUsers = (data) => {
     if (!data) return [];
@@ -471,6 +481,64 @@ const UserAdmin = () => {
     }
   };
 
+  // ----------- EDIT MODAL LOGIC -----------
+
+  const openEditModal = (user) => {
+    setEditingUser(user);
+    setEditForm({
+      full_name: user.full_name || "",
+      role: user.role || "user",
+    });
+    setShowEditModal(true);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditingUser(null);
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    try {
+      setActionMessage(null);
+
+      const { response, data } = await authFetch(
+        `/api/users/${editingUser.id}/update`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            full_name: editForm.full_name,
+            role: editForm.role,
+          }),
+        }
+      );
+
+      if (!response.ok || data?.error) {
+        setActionMessage(
+          data?.message || data?.error || "Failed to update user"
+        );
+        return;
+      }
+
+      setActionMessage("User updated successfully");
+      closeEditModal();
+      loadUsers();
+    } catch (err) {
+      console.error(err);
+      setActionMessage("Server/network error updating user");
+    }
+  };
+
   return (
     <div className="container py-4">
       <h1 className="h4 mb-3">User Administration</h1>
@@ -539,28 +607,38 @@ const UserAdmin = () => {
                       )}
                     </td>
                     <td className="d-flex gap-2 flex-wrap">
+                      {/* EDIT BUTTON (opens modal) */}
+                      <button
+                        className="btn btn-sm btn-outline-primary"
+                        type="button"
+                        onClick={() => openEditModal(u)}
+                      >
+                        Edit
+                      </button>
+
+                      {/* Activate / Deactivate */}
                       {active ? (
                         <button
                           className="btn btn-sm btn-warning"
-                          onClick={() =>
-                            handleActivateDeactivate(u.id, false)
-                          }
+                          type="button"
+                          onClick={() => handleActivateDeactivate(u.id, false)}
                         >
                           Deactivate
                         </button>
                       ) : (
                         <button
                           className="btn btn-sm btn-success"
-                          onClick={() =>
-                            handleActivateDeactivate(u.id, true)
-                          }
+                          type="button"
+                          onClick={() => handleActivateDeactivate(u.id, true)}
                         >
                           Activate
                         </button>
                       )}
 
+                      {/* Delete */}
                       <button
                         className="btn btn-sm btn-outline-danger"
+                        type="button"
                         onClick={() => handleDelete(u.id)}
                       >
                         Delete
@@ -573,9 +651,67 @@ const UserAdmin = () => {
           </table>
         </div>
       )}
+
+      {/* EDIT USER MODAL */}
+      <Modal show={showEditModal} onHide={closeEditModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit User</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {editingUser && (
+            <form onSubmit={handleUpdateUser}>
+              <div className="mb-3">
+                <label htmlFor="full_name" className="form-label">
+                  Full name
+                </label>
+                <input
+                  id="full_name"
+                  name="full_name"
+                  type="text"
+                  className="form-control"
+                  value={editForm.full_name}
+                  onChange={handleEditChange}
+                  required
+                />
+              </div>
+
+              <div className="mb-3">
+                <label htmlFor="role" className="form-label">
+                  Role
+                </label>
+                <select
+                  id="role"
+                  name="role"
+                  className="form-select"
+                  value={editForm.role}
+                  onChange={handleEditChange}
+                  required
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div className="d-flex justify-content-end gap-2">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={closeEditModal}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Save changes
+                </button>
+              </div>
+            </form>
+          )}
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };
+
 
 // -------------------- MAIN APP --------------------
 
