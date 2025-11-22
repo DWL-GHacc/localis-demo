@@ -1,7 +1,7 @@
 import { Navbar, Nav, Container } from "react-bootstrap";
 import { Link, NavLink } from "react-router-dom";
 
-export default function Header({ isLoggedIn, onLogOut, role }) {
+export default function Header({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) {
 
   return (
     <header>
@@ -33,8 +33,12 @@ export default function Header({ isLoggedIn, onLogOut, role }) {
               {/* Logged-out view */}
               {!isLoggedIn && (
                 <>
-                  <NavLink to="/user/login" className="nav-link">Login</NavLink>
-                  <NavLink to="/user/register" className="nav-link">Register</NavLink>
+                  <Nav.Link onClick={onShowLogin} className="nav-link">
+                    Login
+                  </Nav.Link>
+                  <Nav.Link onClick={onShowRegister} className="nav-link">
+                    Register
+                  </Nav.Link>
                 </>
               )}
 

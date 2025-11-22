@@ -51,15 +51,14 @@ router.post("/register", async (req, res) => {
 
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    const [insertId] = await knex("users").insert(
-      {
-        email,
-        password_hash,
-        full_name: full_name || null,
-        role: "user",
-        is_active: 0
-      }
-    );
+    // INSERT user including full_name
+    const [insertId] = await knex("users").insert({
+      email,
+      password_hash,
+      full_name: full_name || null,  // 👈 ensure it's using correct DB field
+      role: "user",
+      is_active: 0
+    });
 
     return res.status(201).json({
       error: false,

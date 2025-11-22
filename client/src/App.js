@@ -8,7 +8,7 @@ import {
   Link,
   useNavigate,
 } from "react-router-dom";
-import { Container } from "react-bootstrap";
+import { Container, Modal } from "react-bootstrap";
 import { useState, useEffect } from "react";
 
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -39,7 +39,6 @@ const authFetch = async (path, options = {}) => {
     headers,
   });
 
-  // Some endpoints may return no body (e.g. 204)
   let data = null;
   try {
     data = await response.json();
@@ -52,14 +51,12 @@ const authFetch = async (path, options = {}) => {
 
 // -------------------- LAYOUT STUBS --------------------
 
-// Temp footer stub
 const Footer = () => (
   <footer className="bg-dark text-light text-center p-3 mt-auto">
     Footer Stub
   </footer>
 );
 
-// Temp contact stub
 const Contact = () => (
   <div className="p-3">
     <h1 className="h4 mb-3">Contact</h1>
@@ -67,7 +64,6 @@ const Contact = () => (
   </div>
 );
 
-// Temp dashboard stub
 const Data = () => (
   <div className="p-3">
     <h1 className="h4 mb-3">Dashboard</h1>
@@ -97,7 +93,7 @@ const PrivateRoutes = () => {
 
 // -------------------- LOGIN PAGE --------------------
 
-const Login = ({ setIsLoggedIn }) => {
+const Login = ({ setIsLoggedIn, onSuccess }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
@@ -148,6 +144,10 @@ const Login = ({ setIsLoggedIn }) => {
 
       setIsLoggedIn(true);
       navigate("/dashboard");
+
+      if (onSuccess) {
+        onSuccess(); // close modal when used in a popup
+      }
     } catch (err) {
       console.error(err);
       setMessage("Network or server error while logging in.");
@@ -208,10 +208,9 @@ const Login = ({ setIsLoggedIn }) => {
   );
 };
 
-
 // -------------------- REGISTER PAGE --------------------
 
-const Register = () => {
+const Register = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -242,7 +241,7 @@ const Register = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: formData.fullName, // adjust if your backend uses a different field
+          full_name: formData.fullName,
           email: formData.email,
           password: formData.password,
         }),
@@ -250,14 +249,18 @@ const Register = () => {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        setMessage(data.error || "Registration failed");
+      if (!response.ok || data.error) {
+        setMessage(data.error || data.message || "Registration failed");
         return;
       }
 
       setMessage(
         "Registration submitted successfully. You may need to wait for activation."
       );
+
+      if (onSuccess) {
+        onSuccess(); // close modal when used in popup
+      }
     } catch (err) {
       console.error(err);
       setMessage("Network or server error while registering.");
@@ -365,7 +368,6 @@ const UserAdmin = () => {
   const [error, setError] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
 
-  // helper: extract data.users
   const extractUsers = (data) => {
     if (!data) return [];
     if (Array.isArray(data.users)) return data.users;
@@ -380,7 +382,6 @@ const UserAdmin = () => {
 
       let finalList = [];
 
-      // ACTIVE users
       if (filter === "active" || filter === "all") {
         const { response, data } = await authFetch("/api/users/active");
 
@@ -391,7 +392,6 @@ const UserAdmin = () => {
         finalList = finalList.concat(extractUsers(data));
       }
 
-      // PENDING users
       if (filter === "pending" || filter === "all") {
         const { response, data } = await authFetch("/api/users/pending");
 
@@ -416,7 +416,6 @@ const UserAdmin = () => {
     loadUsers();
   }, [filter]);
 
-  // Normalize boolean (1/0 or true/false)
   const isActiveFlag = (u) =>
     u.is_active === 1 || u.is_active === true || u.is_active === "1";
 
@@ -540,8 +539,6 @@ const UserAdmin = () => {
                       )}
                     </td>
                     <td className="d-flex gap-2 flex-wrap">
-
-                      {/* Activate / Deactivate */}
                       {active ? (
                         <button
                           className="btn btn-sm btn-warning"
@@ -562,14 +559,12 @@ const UserAdmin = () => {
                         </button>
                       )}
 
-                      {/* Delete */}
                       <button
                         className="btn btn-sm btn-outline-danger"
                         onClick={() => handleDelete(u.id)}
                       >
                         Delete
                       </button>
-
                     </td>
                   </tr>
                 );
@@ -582,34 +577,68 @@ const UserAdmin = () => {
   );
 };
 
-
 // -------------------- MAIN APP --------------------
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    !!localStorage.getItem("token")
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   const handleLogOut = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("role");   // add this
+    localStorage.removeItem("role");
+    localStorage.removeItem("userName");
     setIsLoggedIn(false);
   };
 
   return (
     <BrowserRouter>
       <div className="d-flex flex-column min-vh-100">
-        <Header 
-  isLoggedIn={isLoggedIn} 
-  onLogOut={handleLogOut}
-  role={localStorage.getItem("role")} 
-/>
+        <Header
+          isLoggedIn={isLoggedIn}
+          onLogOut={handleLogOut}
+          role={localStorage.getItem("role")}
+          onShowLogin={() => setShowLoginModal(true)}
+          onShowRegister={() => setShowRegisterModal(true)}
+        />
+
+        {/* LOGIN MODAL */}
+        <Modal
+          show={showLoginModal}
+          onHide={() => setShowLoginModal(false)}
+          centered
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Log in</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Login
+              setIsLoggedIn={setIsLoggedIn}
+              onSuccess={() => setShowLoginModal(false)}
+            />
+          </Modal.Body>
+        </Modal>
+
+        {/* REGISTER MODAL */}
+        <Modal
+          show={showRegisterModal}
+          onHide={() => setShowRegisterModal(false)}
+          centered
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Register</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Register onSuccess={() => setShowRegisterModal(false)} />
+          </Modal.Body>
+        </Modal>
 
         <Container fluid className="flex-grow-1">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/contact-us" element={<Contact />} />
 
+            {/* Page routes still work if you navigate directly */}
             <Route
               path="/user/login"
               element={<Login setIsLoggedIn={setIsLoggedIn} />}
