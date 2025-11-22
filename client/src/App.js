@@ -18,6 +18,7 @@ const Footer = () => (
 
 const Contact = () => <div className="p-3">Contact Page Stub</div>;
 const Data = () => <div className="p-3">Protected Data Page Stub</div>;
+
 const Login = ({ setIsLoggedIn }) => (
   <div className="p-3">
     Login Stub <br />
