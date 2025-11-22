@@ -141,6 +141,56 @@ router.post("/login", async (req, res) => {
     });
   }
 });
+// ------------------------------------------------------------
+// RENEW TOKEN (sliding session)
+// POST /api/users/renew
+// Requires valid existing token in Authorization header
+// ------------------------------------------------------------
+router.post(
+  "/renew",
+  authenticateToken,   // existing middleware, ensures token is valid & not expired
+  async (req, res) => {
+    try {
+      const userId = req.user.sub;
+
+      // Optional: re-check user in DB so deactivated/deleted users can't renew
+      const user = await knex("users")
+        .select("id", "email", "full_name", "role", "is_active")
+        .where({ id: userId })
+        .first();
+
+      if (!user) {
+        return res.status(404).json({
+          error: true,
+          message: "User not found"
+        });
+      }
+
+      if (!user.is_active) {
+        return res.status(403).json({
+          error: true,
+          message: "Account is inactive; token cannot be renewed"
+        });
+      }
+
+      // Issue a fresh token with a new expiry
+      const newToken = generateToken(user);
+
+      return res.json({
+        error: false,
+        message: "Token renewed successfully",
+        token: newToken,
+        user // handy if frontend wants refreshed user info
+      });
+    } catch (err) {
+      console.error("Error renewing token:", err);
+      return res.status(500).json({
+        error: true,
+        message: "Error renewing token"
+      });
+    }
+  }
+);
 
 // ------------------------------------------------------------
 // ADMIN: ACTIVATE USER
@@ -195,6 +245,7 @@ router.patch("/:id/activate",
     }
   }
 );
+
 // ------------------------------------------------------------
 // ADMIN: DEACTIVATE USER
 // PATCH /api/users/:id/deactivate
@@ -249,6 +300,7 @@ router.patch(
     }
   }
 );
+
 // ------------------------------------------------------------
 // ADMIN: LIST INACTIVE USERS (Pending Approval)
 // GET /api/users/pending
@@ -274,6 +326,173 @@ router.get(
       return res.status(500).json({
         error: true,
         message: "Database error while fetching pending users"
+      });
+    }
+  }
+);
+
+// ------------------------------------------------------------
+// ADMIN: CHANGE USER ROLE
+// PATCH /api/users/:id/role
+// Body: { "role": "admin" | "user" }
+// ------------------------------------------------------------
+router.patch(
+  "/:id/role",
+  authenticateToken,
+  requireAdmin,
+  async (req, res) => {
+    const userId = parseInt(req.params.id, 10);
+    const { role } = req.body;
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        error: true,
+        message: "Invalid user ID"
+      });
+    }
+
+    // Basic validation of allowed roles
+    const allowedRoles = ["user", "admin"];
+    if (!role || !allowedRoles.includes(role)) {
+      return res.status(400).json({
+        error: true,
+        message: `Invalid role. Allowed roles: ${allowedRoles.join(", ")}`
+      });
+    }
+
+    // test to prevent admins changing their own role, if you want
+     if (req.user.sub === userId) {
+       return res.status(400).json({
+         error: true,
+         message: "Admins cannot change their own role"
+       });
+     }
+
+    try {
+      const user = await knex("users")
+        .select("id", "email", "full_name", "role", "is_active")
+        .where({ id: userId })
+        .first();
+
+      if (!user) {
+        return res.status(404).json({
+          error: true,
+          message: "User not found"
+        });
+      }
+
+      await knex("users")
+        .where({ id: userId })
+        .update({ role });
+
+      const updated = await knex("users")
+        .select("id", "email", "full_name", "role", "is_active")
+        .where({ id: userId })
+        .first();
+
+      return res.json({
+        error: false,
+        message: `User role updated to '${role}' successfully`,
+        user: updated
+      });
+    } catch (err) {
+      console.error("Error updating user role:", err);
+      return res.status(500).json({
+        error: true,
+        message: "Database error while updating user role"
+      });
+    }
+  }
+);
+
+// ------------------------------------------------------------
+// ADMIN: DELETE USER
+// DELETE /api/users/:id
+// ------------------------------------------------------------
+router.delete(
+  "/:id",
+  authenticateToken,
+  requireAdmin,
+  async (req, res) => {
+    const userId = parseInt(req.params.id, 10);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        error: true,
+        message: "Invalid user ID"
+      });
+    }
+
+    try {
+      const user = await knex("users")
+        .select("id", "email", "full_name", "role", "is_active")
+        .where({ id: userId })
+        .first();
+
+      if (!user) {
+        return res.status(404).json({
+          error: true,
+          message: "User not found"
+        });
+      }
+
+      // Prevent admin from deleting themselves
+       if (req.user.sub === userId) {
+         return res.status(400).json({
+           error: true,
+           message: "Admins cannot delete their own account"
+         });
+       }
+
+      await knex("users")
+        .where({ id: userId })
+        .del();
+
+      return res.json({
+        error: false,
+        message: "User deleted successfully",
+        deletedUser: {
+          id: user.id,
+          email: user.email,
+          full_name: user.full_name,
+          role: user.role
+        }
+      });
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      return res.status(500).json({
+        error: true,
+        message: "Database error during user deletion"
+      });
+    }
+  }
+);
+
+// ------------------------------------------------------------
+// ADMIN: LIST ACTIVE USERS
+// GET /api/users/active
+// ------------------------------------------------------------
+router.get(
+  "/active",
+  authenticateToken,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const activeUsers = await knex("users")
+        .select("id", "email", "full_name", "role", "is_active")
+        .where({ is_active: 1 })
+        .orderBy("id", "asc");
+
+      return res.json({
+        error: false,
+        count: activeUsers.length,
+        users: activeUsers
+      });
+    } catch (err) {
+      console.error("Error fetching active users:", err);
+      return res.status(500).json({
+        error: true,
+        message: "Database error while fetching active users"
       });
     }
   }
