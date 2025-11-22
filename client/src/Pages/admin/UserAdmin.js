@@ -1,4 +1,3 @@
-// client/src/Pages/admin/UserAdmin.jsx
 import { useEffect, useState } from "react";
 import { authFetch } from "../../api/authClient";
 import EditUserModal from "./EditUserModal";
@@ -28,21 +27,48 @@ const UserAdmin = () => {
 
       let finalList = [];
 
-      if (filter === "active" || filter === "all") {
+      if (filter === "active") {
         const { response, data } = await authFetch("/api/users/active");
         if (!response.ok || data.error) {
           throw new Error(data.message || "Failed to load active users");
         }
-        finalList = finalList.concat(extractUsers(data));
-      }
-
-      if (filter === "pending" || filter === "all") {
+        finalList = extractUsers(data);
+      } else if (filter === "pending") {
         const { response, data } = await authFetch("/api/users/pending");
         if (!response.ok || data.error) {
           throw new Error(data.message || "Failed to load pending users");
         }
-        finalList = finalList.concat(extractUsers(data));
+        finalList = extractUsers(data);
+      } else if (filter === "all") {
+        // Fetch active + pending in parallel and merge
+        const [activeResult, pendingResult] = await Promise.all([
+          authFetch("/api/users/active"),
+          authFetch("/api/users/pending"),
+        ]);
+
+        const { response: activeRes, data: activeData } = activeResult;
+        const { response: pendingRes, data: pendingData } = pendingResult;
+
+        if (!activeRes.ok || activeData.error) {
+          throw new Error(
+            activeData.message || "Failed to load active users"
+          );
+        }
+
+        if (!pendingRes.ok || pendingData.error) {
+          throw new Error(
+            pendingData.message || "Failed to load pending users"
+          );
+        }
+
+        finalList = [
+          ...extractUsers(activeData),
+          ...extractUsers(pendingData),
+        ];
       }
+
+      // Optional: sort by email for consistent ordering
+      finalList.sort((a, b) => (a.email || "").localeCompare(b.email || ""));
 
       setUsers(finalList);
     } catch (err) {
@@ -154,7 +180,7 @@ const UserAdmin = () => {
         setActionMessage(
           data?.message || data?.error || "Failed to update user"
         );
-        return;
+          return;
       }
 
       setActionMessage("User updated successfully");
@@ -166,8 +192,26 @@ const UserAdmin = () => {
     }
   };
 
+  // Helper to choose role badge classes
+  const getRoleBadgeClass = (role) => {
+    if (role === "admin") return "badge bg-primary";
+    if (role === "user") return "badge bg-info text-dark";
+    return "badge bg-secondary";
+  };
+
   return (
+    
     <div className="container py-4">
+      <nav aria-label="breadcrumb">
+        <ol className="breadcrumb">
+          <li className="breadcrumb-item">
+            <a href="/admin">Admin</a>
+          </li>
+          <li className="breadcrumb-item active" aria-current="page">
+            User Administration
+          </li>
+        </ol>
+      </nav>
       <h1 className="h4 mb-3">User Administration</h1>
 
       <div className="btn-group mb-3">
@@ -207,7 +251,7 @@ const UserAdmin = () => {
 
       {!loading && !error && users.length > 0 && (
         <div className="table-responsive">
-          <table className="table table-sm table-striped">
+          <table className="table table-sm table-striped align-middle">
             <thead>
               <tr>
                 <th>Email</th>
@@ -224,7 +268,11 @@ const UserAdmin = () => {
                   <tr key={u.id}>
                     <td>{u.email}</td>
                     <td>{u.full_name}</td>
-                    <td>{u.role}</td>
+                    <td>
+                      <span className={getRoleBadgeClass(u.role)}>
+                        {u.role || "unknown"}
+                      </span>
+                    </td>
                     <td>
                       {active ? (
                         <span className="badge bg-success">Active</span>

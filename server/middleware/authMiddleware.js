@@ -1,7 +1,11 @@
 // server/middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || "JJhnvlsdmjlidm$o,!4822Ip:?8nns*nmmjwndxgQJK<L!~o^LR";
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error("FATAL: JWT_SECRET is not set in the environment variables");
+}
 
 // -------------------------------
 // Authenticate all logged-in users

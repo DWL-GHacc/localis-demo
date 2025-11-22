@@ -20,6 +20,8 @@ import UserAdmin from "./Pages/admin/UserAdmin";
 import PrivateRoutes from "./routes/PrivateRoutes";
 import Footer from "./Components/footer";
 import "./index.css";
+import Admin from "./Pages/Admin";
+import FeedbackAdmin from "./Pages/admin/FeedbackAdmin";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -80,7 +82,7 @@ function App() {
         <Container fluid className="flex-grow-1">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/contact-us" element={<Contact />} />
+            <Route path="/contact" element={<Contact />} />
 
             <Route
               path="/user/login"
@@ -90,7 +92,9 @@ function App() {
 
             <Route element={<PrivateRoutes />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/admin" element={<Admin />} />
               <Route path="/admin/users" element={<UserAdmin />} />
+              <Route path="/admin/feedback" element={<FeedbackAdmin />} />
             </Route>
 
             <Route

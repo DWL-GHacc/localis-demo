@@ -33,6 +33,10 @@ app.get("/", (req, res) => {
   res.json({ status: "ok", message: "Localis API running" });
 });
 
+const feedbackRoutes = require("./routes/feedback");
+app.use("/api/feedback", feedbackRoutes);
+
+
 // API health test
 app.get("/api/health", (req, res) => {
   res.json({
