@@ -72,7 +72,7 @@ router.get("/categories", async (req, res, next) => {
 
 
 // Get distinct regions from spend data
-router.get("regions", async (req, res, next) => {
+router.get("/regions", async (req, res, next) => {
     req.db
       .from("spend_data")
       .distinct("region")
@@ -165,10 +165,10 @@ router.get("/spend_by_region", async (req, res, next) => {
 
 // Get spend by category per region
 router.get("/category_spend_per_region", async (req, res, next) => {
-    // const region = req.query.region;
-    // console.log(`Region: ${region}`);
+    const region = req.query.region;
+    console.log(`Region: ${region}`);
 
-    const region = "Gold Coast"; // for testing
+    // const region = "Gold Coast"; // for testing
     // frontend request URL example:
     // http://localhost:3000/spend_data/category_spend_per_region?region=Gold%20Coast
 
