@@ -1,14 +1,4 @@
 // server/server.js
-// import express from "express";
-// import cors from "cors";
-// import dotenv from "dotenv";
-// import usersRouter from "./routes/users.js";
-// import lgaRouter from "./routes/lgaRoutes.js";
-// import historicalRoutes from "./localis_data/routes/historical/index.js";
-// import lengthRoutes from "./localis_data/routes/length/index.js";
-// import spendRoutes from "./localis_data/routes/spend/index.js";
-// import usersRoutes from "./localis_data/routes/users.js";
-
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
@@ -43,6 +33,10 @@ app.get("/", (req, res) => {
   res.json({ status: "ok", message: "Localis API running" });
 });
 
+const feedbackRoutes = require("./routes/feedback");
+app.use("/api/feedback", feedbackRoutes);
+
+
 // API health test
 app.get("/api/health", (req, res) => {
   res.json({
@@ -62,6 +56,6 @@ app.use("/api/spend_data", spendRoutes);
 
 
 app.listen(PORT, () => {
-  console.log(`🚀 Localis API listening on http://localhost:${PORT}`);
+  console.log(`Localis API listening on http://localhost:${PORT}`);
 });
 
