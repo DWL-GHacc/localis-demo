@@ -11,3 +11,79 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.navbar .nav-link {
+  font-size: 1.5rem;
+  color: black;
+}
+
+.navbar-brand {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.navbar .nav-link.active {
+  font-weight: 500;
+}
+
+.hero-banner {
+  min-height: 80vh;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  padding: 4rem 0;
+  margin: 10px;
+  color: black;
+}
+
+.dih-preview {
+  height: 300px;
+  background: linear-gradient(180deg, #ffffff 0%, #f2fbf8 100%);
+  border: 1px solid #e6f2ef;
+  box-shadow: 0 8px 24px rgba(10,61,50,.12);
+}
+
+/* ------------- FIXED IMAGE PATHS (images moved to src/images) ------------- */
+
+.hero-banner {
+  background-image: url("./images/localis-dih-banner.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  min-height: clamp(60vh, 70vh + 5vw, 90vh);
+  padding: 3rem 0;
+}
+
+@media (min-width: 576px) {
+  .hero-banner {
+    padding: 4rem 0;
+    background-position: center top;
+  }
+}
+
+@media (min-width: 768px) {
+  .hero-banner {
+    padding: 5rem 0;
+    background-position: center;
+  }
+  .hero-content {
+    max-width: 560px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .hero-banner {
+    min-height: 90vh;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .hero-banner {
+    background-image:
+      linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0)),
+      url("./images/localis-dih-banner-mobile.jpg");
+    background-position: center top;
+  }
+}
