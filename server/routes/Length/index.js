@@ -74,16 +74,16 @@ router.get("/ave_LOS_BW_LGA", async (req, res, next) => {
 
 // Get average LOS for a given period
 router.get("/ave_LOS_period", async (req, res, next) => {
-    // const start = req.query.start;
-    // const end = req.query.end;
-    // console.log(`Start: ${start}, End: ${end}`);
+    const start = req.query.start;
+    const end = req.query.end;
+    console.log(`Start: ${start}, End: ${end}`);
 
     // frontend request URL example:
     // http://localhost:3000/length_data/ave_LOS_period?start=2023-01-01&end=2023-12-31
 
     // for testing
-    const start = "2023-01-01";
-    const end = "2023-12-31";
+    // const start = "2023-01-01";
+    // const end = "2023-12-31";
 
     // check for missing parameters
     if(!start || !end) {
@@ -110,13 +110,13 @@ router.get("/ave_LOS_period", async (req, res, next) => {
 
 // Get average LOS and BW by LGA over time
 router.get("/ave_LOS_by_LGA", async (req, res, next) => {
-    // const lga = req.query.lga_name;
-    // console.log(`LGA: ${lga}`);
+    const lga = req.query.lga_name;
+    console.log(`LGA: ${lga}`);
 
     // frontend request URL example:
     // http://localhost:3000/length_data/ave_LOS_by_LGA?lga_name=Gold%20Coast;
 
-    const lga = "Gold Coast"; // for testing
+    // const lga = "Gold Coast"; // for testing
 
     if(!lga) {
         return res.status(400).json({ Error: true, Message: "Missing lga_name parameter" });
