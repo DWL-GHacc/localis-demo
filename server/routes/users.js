@@ -13,6 +13,8 @@ const {
   changeUserRole,
   deleteUser,
   updateUserDetails,
+  updateUserPassword, 
+  clearUserPassword,
 } = require("../controllers/usersController");
 
 const {
@@ -65,6 +67,10 @@ router.patch(
 
 // DELETE /api/users/:id
 router.delete("/:id", authenticateToken, requireAdmin, deleteUser);
+
+// Manage user passwords
+router.patch("/:id/password", authenticateToken, updateUserPassword);
+router.delete("/:id/password", authenticateToken, clearUserPassword);
 
 module.exports = router;
 

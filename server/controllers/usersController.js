@@ -471,6 +471,121 @@ async function updateUserDetails(req, res) {
     });
   }
 }
+// ------------------------------------------------------------
+// UPDATE USER PASSWORD
+// PATCH /api/users/:id/password
+// Admin or the user themselves
+// body: { password }
+// ------------------------------------------------------------
+async function updateUserPassword(req, res) {
+  const userId = parseInt(req.params.id, 10);
+  const { password } = req.body;
+
+  if (isNaN(userId)) {
+    return res.status(400).json({
+      error: true,
+      message: "Invalid user ID",
+    });
+  }
+
+  if (!password || typeof password !== "string" || password.length < 8) {
+    return res.status(400).json({
+      error: true,
+      message: "Password must be at least 8 characters long",
+    });
+  }
+
+  try {
+    // Permission check — allow admin OR same user
+    if (req.user.role !== "admin" && req.user.id !== userId) {
+      return res.status(403).json({
+        error: true,
+        message: "You are not allowed to change this password",
+      });
+    }
+
+    const user = await knex("users")
+      .select("id")
+      .where({ id: userId })
+      .first();
+
+    if (!user) {
+      return res.status(404).json({
+        error: true,
+        message: "User not found",
+      });
+    }
+
+    const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    await knex("users")
+      .where({ id: userId })
+      .update({ password_hash });
+
+    return res.json({
+      error: false,
+      message: "Password updated successfully",
+    });
+  } catch (err) {
+    console.error("Error updating password:", err);
+    return res.status(500).json({
+      error: true,
+      message: "Database error while updating password",
+    });
+  }
+}
+
+// ------------------------------------------------------------
+// CLEAR USER PASSWORD
+// DELETE /api/users/:id/password
+// Admin only — clears password so user cannot log in
+// ------------------------------------------------------------
+async function clearUserPassword(req, res) {
+  const userId = parseInt(req.params.id, 10);
+
+  if (isNaN(userId)) {
+    return res.status(400).json({
+      error: true,
+      message: "Invalid user ID",
+    });
+  }
+
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        error: true,
+        message: "Only admins can clear a password",
+      });
+    }
+
+    const user = await knex("users")
+      .select("id")
+      .where({ id: userId })
+      .first();
+
+    if (!user) {
+      return res.status(404).json({
+        error: true,
+        message: "User not found",
+      });
+    }
+
+    await knex("users")
+      .where({ id: userId })
+      .update({ password_hash: null });
+
+    return res.json({
+      error: false,
+      message: "Password cleared successfully",
+    });
+  } catch (err) {
+    console.error("Error clearing password:", err);
+    return res.status(500).json({
+      error: true,
+      message: "Database error while clearing password",
+    });
+  }
+}
 
 // ------------------------------------------------------------
 // EXPORTS
@@ -486,4 +601,6 @@ module.exports = {
   changeUserRole,
   deleteUser,
   updateUserDetails,
+  updateUserPassword,  
+  clearUserPassword,  
 };

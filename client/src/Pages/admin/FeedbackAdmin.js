@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { authFetch } from "../../api/authClient";
+import { authFetch } from "../../API/authClient";
 
 const FEEDBACK_TYPES = [
   { value: "all", label: "All types" },

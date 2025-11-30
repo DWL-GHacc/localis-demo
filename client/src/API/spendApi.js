@@ -1,3 +1,5 @@
+// client/src/api/spendAPI
+// .js
 import { useState, useEffect } from "react";
 
 // Get all spend data
