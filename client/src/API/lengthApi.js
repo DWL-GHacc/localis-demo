@@ -56,6 +56,13 @@ const getLengthMonthlyLOSBWPerLGA = async () => {
     .then((response) => response.json());
 };
 
+const getLengthAvgLOSandBWByLGA = async (lga) =>{
+  const url = `http://localhost:3000/api/length_data/ave_LOS_BW_by_LGA?lga_name=${lga}`;
+  
+  return fetch(url)
+  .then((response) => response.json())
+};
+
 // Custom hooks
 // useLengthAllData hook
 export const useLengthAllData = () => {
@@ -251,4 +258,25 @@ export const useLengthMonthlyLOSBWPerLGA = () => {
     fetchData();
   }, []);
   return { data: data, loading: loading, error: error };
+};
+
+export const useLengthAvgLOSandBWByLGA = (lga) => {
+    const [data, setData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const result = await getLengthAvgLOSandBWByLGA(lga);
+          setData(result);
+        } catch (err) {
+          setError(err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    }, [lga]);
+    return { data: data, loading: loading, error: error };
 };
