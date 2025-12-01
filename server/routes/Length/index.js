@@ -109,12 +109,12 @@ router.get("/ave_LOS_period", async (req, res, next) => {
 });
 
 // Get average LOS and BW by LGA over time
-router.get("/ave_LOS_by_LGA", async (req, res, next) => {
+router.get("/ave_LOS_BW_by_LGA", async (req, res, next) => {
     const lga = req.query.lga_name;
     console.log(`LGA: ${lga}`);
 
     // frontend request URL example:
-    // http://localhost:3000/length_data/ave_LOS_by_LGA?lga_name=Gold%20Coast;
+    // http://localhost:3000/length_data/ave_LOS_BW_by_LGA?lga_name=Gold%20Coast;
 
     // const lga = "Gold Coast"; // for testing
 
