@@ -586,6 +586,148 @@ async function clearUserPassword(req, res) {
     });
   }
 }
+// ------------------------------------------------------------
+// GET USER LGA ACCESS
+// GET /api/users/:id/lgas
+// Admin only
+// ------------------------------------------------------------
+async function getUserLgaAccess(req, res) {
+  const userId = parseInt(req.params.id, 10);
+
+  if (isNaN(userId)) {
+    return res.status(400).json({
+      error: true,
+      message: "Invalid user ID",
+    });
+  }
+
+  try {
+    const user = await knex("users")
+      .select("id", "lga_scope")
+      .where({ id: userId })
+      .first();
+
+    if (!user) {
+      return res.status(404).json({
+        error: true,
+        message: "User not found",
+      });
+    }
+
+    // Default if column not populated for some older rows
+    const scope = user.lga_scope || "all";
+
+    if (scope === "all") {
+      // No need to read the mapping table
+      return res.json({
+        error: false,
+        scope: "all",
+        lgas: [],
+      });
+    }
+
+    const rows = await knex("user_lga_access")
+      .select("lga_name")
+      .where({ user_id: userId })
+      .orderBy("lga_name", "asc");
+
+    const lgas = rows.map((r) => r.lga_name);
+
+    return res.json({
+      error: false,
+      scope: "restricted",
+      lgas,
+    });
+  } catch (err) {
+    console.error("Error getting user LGA access:", err);
+    return res.status(500).json({
+      error: true,
+      message: "Database error while fetching user LGA access",
+    });
+  }
+}
+
+// ------------------------------------------------------------
+// UPDATE USER LGA ACCESS
+// PUT /api/users/:id/lgas
+// body: { scope: 'all' | 'restricted', lgas: string[] }
+// Admin only
+// ------------------------------------------------------------
+async function updateUserLgaAccess(req, res) {
+  const userId = parseInt(req.params.id, 10);
+  const { scope, lgas } = req.body;
+
+  if (isNaN(userId)) {
+    return res.status(400).json({
+      error: true,
+      message: "Invalid user ID",
+    });
+  }
+
+  if (!scope || !["all", "restricted"].includes(scope)) {
+    return res.status(400).json({
+      error: true,
+      message: "scope must be 'all' or 'restricted'",
+    });
+  }
+
+  if (scope === "restricted") {
+    if (!Array.isArray(lgas) || lgas.length === 0) {
+      return res.status(400).json({
+        error: true,
+        message: "When scope is 'restricted', lgas must be a non-empty array",
+      });
+    }
+  }
+
+  try {
+    const user = await knex("users")
+      .select("id")
+      .where({ id: userId })
+      .first();
+
+    if (!user) {
+      return res.status(404).json({
+        error: true,
+        message: "User not found",
+      });
+    }
+
+    await knex.transaction(async (trx) => {
+      // Update scope on users table
+      await trx("users").where({ id: userId }).update({ lga_scope: scope });
+
+      // Clear existing mappings
+      await trx("user_lga_access").where({ user_id: userId }).del();
+
+      if (scope === "restricted") {
+        const distinctLgas = [...new Set(lgas)].filter(Boolean);
+
+        const rowsToInsert = distinctLgas.map((name) => ({
+          user_id: userId,
+          lga_name: name,
+        }));
+
+        if (rowsToInsert.length > 0) {
+          await trx("user_lga_access").insert(rowsToInsert);
+        }
+      }
+    });
+
+    return res.json({
+      error: false,
+      message: "User LGA access updated successfully",
+      scope,
+      lgas: scope === "restricted" ? lgas : [],
+    });
+  } catch (err) {
+    console.error("Error updating user LGA access:", err);
+    return res.status(500).json({
+      error: true,
+      message: "Database error while updating user LGA access",
+    });
+  }
+}
 
 // ------------------------------------------------------------
 // EXPORTS
@@ -603,4 +745,6 @@ module.exports = {
   updateUserDetails,
   updateUserPassword,  
   clearUserPassword,  
+  getUserLgaAccess,       
+  updateUserLgaAccess,    
 };
