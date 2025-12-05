@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { authFetch } from "../../api/authClient";
+import { authFetch } from "../../API/authClient";
 import EditUserModal from "./EditUserModal";
 
 const UserAdmin = () => {

@@ -1,7 +1,7 @@
 // client/src/Pages/auth/Login.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { API_BASE } from "../../api/authClient";
+import { API_BASE } from "../../API/authClient";
 
 const Login = ({ setIsLoggedIn, onSuccess }) => {
   const navigate = useNavigate();

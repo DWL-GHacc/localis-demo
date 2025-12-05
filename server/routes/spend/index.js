@@ -86,27 +86,46 @@ router.get("/regions", async (req, res, next) => {
       });
 });
 
-// Get spend by category
+// Get spend by category !!!!!! Edited by EW
 router.get("/spend_by_category", async (req, res, next) => {
-    req.db
+    const { region, start, end } = req.query;
+
+
+    let query = req.db
       .from("spend_data")
       .select(
         "category",
-        req.db.raw("SUM(spend) AS total_spend"),
-        req.db.raw("SUM(no_txns) AS total_transactions"),
-        req.db.raw("SUM(cards_seen) AS total_cards_seen")
-      )
-      .groupBy("category")
-      .orderBy("total_spend", "desc")
-      .then((rows) => {
-        res.json({ Error: false, Message: "success", Data: rows });
-      })
-      .catch((err) => {
-        console.log(err);
-        res.json({ Error: true, Message: "Error executing MySQL query" });
-      });
-});
+        req.db.raw("ROUND(SUM(spend) / 1000000, 2) AS total_spend_millions"),
+        req.db.raw("ROUND(SUM(no_txns), 0) AS total_transactions"),
+        req.db.raw("ROUND(SUM(cards_seen), 0) AS total_cards_seen")
+      );
 
+      if (region){
+        query = query.where("region", region);
+      }
+
+      if (start && end) {
+        query = query.whereBetween("spend_date", [start, end]);
+      } else if (start) {
+        query = query.where("spend_date", ">=", start);
+      }else if (end) {
+    query = query.where("spend_date", "<=", end);
+  }
+
+  // Group + order
+  query = query
+    .groupBy("category")
+    .orderBy("total_spend_millions", "desc");
+
+  query
+    .then((rows) => {
+      res.json({ Error: false, Message: "success", Data: rows });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.json({ Error: true, Message: "Error executing MySQL query" });
+    });
+});
 
 // Get spend intensity per region
 router.get("/spend_intensity", async (req, res, next) => {
@@ -200,29 +219,35 @@ router.get("/category_spend_per_region", async (req, res, next) => {
 
 // Get monthly spend per region
 router.get("/monthly_spend_per_region", async (req, res, next) => {
-    req.db
-      .from("spend_data")
+    const { region, year} = req.query;
+
+    try {
+      const db = req.db;
+
+      let query = db("spend_data")
       .select(
         "region",
-        req.db.raw("YEAR(spend_date) AS year"),
-        req.db.raw("MONTH(spend_date) AS month"),
-        req.db.raw("SUM(spend) AS total_spend"),
-        req.db.raw("SUM(no_txns) AS total_transactions"),
-        req.db.raw("SUM(cards_seen) AS total_cards_seen")
+        db.raw("YEAR(spend_date) AS year"),
+        db.raw("MONTH(spend_date) AS month"),
+        db.raw("SUM(spend) AS total_spend"),
+        db.raw("SUM(no_txns) AS total_transactions"),
+        db.raw("SUM(cards_seen) AS total_cards_seen")
       )
-      .groupBy(
-        "region",
-        req.db.raw("YEAR(spend_date)"),
-        req.db.raw("MONTH(spend_date)")
-      )
-      .orderBy(["region", "year", "month"])
-      .then((rows) => {
-        res.json({ Error: false, Message: "success", Data: rows });
-      })
-      .catch((err) => {
+      .groupBy("region", db.raw("YEAR(spend_date)"), db.raw("MONTH(spend_date)"))
+      .orderBy(["region", "year", "month"]);
+
+      if(region) {
+        query = query.where("region", region);
+      }
+      
+      const rows = await query;
+      
+      return res.json({ Error: false, Message: "success", Data: rows });
+
+    } catch(err) {
         console.log(err);
-        res.json({ Error: true, Message: "Error executing MySQL query" });
-      });
+        return res.json({ Error: true, Message: "Error executing MySQL query" });
+    }
 });
 
 

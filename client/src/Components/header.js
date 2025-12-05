@@ -1,10 +1,15 @@
 // client/src/Components/header.jsx
 
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { Navbar, Nav, Container, Button } from "react-bootstrap";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 
-const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => {
+export default function Header({
+  isLoggedIn,
+  onLogOut,
+  role,
+  onShowLogin,
+  onShowRegister,
+}) {
   const navigate = useNavigate();
   const isAdmin = role === "admin";
 
@@ -12,83 +17,91 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
     if (onLogOut) {
       onLogOut();
     }
-    navigate("/");
+    navigate("/"); // send them back to home
   };
 
   return (
-    <Navbar bg="dark" variant="dark" expand="lg" className="mb-3">
-      <Container>
-        <Navbar.Brand as={Link} to="/">
-          Localis Prototype
-        </Navbar.Brand>
+    <header>
+      <Navbar bg="body" expand="md">
+        <Container fluid>
+          {/* Logo – click to go home */}
+          <Navbar.Brand
+            as={Link}
+            to="/"
+            className="d-flex p-2"
+          >
+            <img
+              src="/images/localis-dih-blk.svg"
+              alt="Localis Destination Insight Hub logo"
+              width="300"
+              height="auto"
+            />
+          </Navbar.Brand>
 
-        <Navbar.Toggle aria-controls="main-navbar-nav" />
-        <Navbar.Collapse id="main-navbar-nav">
-          <Nav className="me-auto">
-            {/* Always visible */}
-            <Nav.Link as={Link} to="/">
-              Home
-            </Nav.Link>
-
-            {/* Dashboard visible only when logged in */}
-            {isLoggedIn && (
-              <Nav.Link as={Link} to="/dashboard">
-                Dashboard
+          <Navbar.Toggle aria-controls="navbarSupportedContent" />
+          <Navbar.Collapse id="navbarSupportedContent">
+            {/* LEFT SIDE NAV */}
+            <Nav className="me-auto">
+              <Nav.Link as={NavLink} to="/" end>
+                Home
               </Nav.Link>
-            )}
 
-            {/* ADMIN HUB LINK */}
-            {isLoggedIn && isAdmin && (
-              <Nav.Link as={Link} to="/admin">
-                Admin
-              </Nav.Link>
-            )}
-          </Nav>
+              {isLoggedIn && (
+                <Nav.Link as={NavLink} to="/dashboard">
+                  Dashboard
+                </Nav.Link>
+              )}
 
-          {/* RIGHT SIDE — Login / Register or Logout */}
-          <Nav className="ms-auto">
-            {!isLoggedIn && (
-              <>
-                <Button
-                  variant="outline-light"
-                  size="sm"
-                  className="me-2"
-                  onClick={onShowLogin}
-                >
-                  Log in
-                </Button>
+              {isLoggedIn && isAdmin && (
+                <Nav.Link as={NavLink} to="/admin">
+                  Admin
+                </Nav.Link>
+              )}
+            </Nav>
 
-                <Button
-                  variant="light"
-                  size="sm"
-                  onClick={onShowRegister}
-                >
-                  Register
-                </Button>
-              </>
-            )}
+            {/* RIGHT SIDE – login/register OR user + logout */}
+            <Nav className="ms-auto align-items-center">
+              {!isLoggedIn && (
+                <>
+                  <Button
+                    variant="outline-dark"
+                    size="sm"
+                    className="me-2"
+                    onClick={onShowLogin}
+                  >
+                    Log in
+                  </Button>
 
-            {isLoggedIn && (
-              <>
-                <Navbar.Text className="me-3">
-                  Signed in as{" "}
-                  <strong>{localStorage.getItem("userName") || "User"}</strong>
-                </Navbar.Text>
+                  <Button
+                    variant="dark"
+                    size="sm"
+                    onClick={onShowRegister}
+                  >
+                    Register
+                  </Button>
+                </>
+              )}
 
-                <Button
-                  variant="outline-light"
-                  size="sm"
-                  onClick={handleLogoutClick}
-                >
-                  Log out
-                </Button>
-              </>
-            )}
-          </Nav>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+              {isLoggedIn && (
+                <>
+                  <Navbar.Text className="me-3">
+                    Signed in as{" "}
+                    <strong>{localStorage.getItem("userName") || "User"}</strong>
+                  </Navbar.Text>
+
+                  <Button
+                    variant="outline-dark"
+                    size="sm"
+                    onClick={handleLogoutClick}
+                  >
+                    Log out
+                  </Button>
+                </>
+              )}
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
+    </header>
   );
-};
-
-export default Header;
+}

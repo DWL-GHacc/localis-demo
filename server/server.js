@@ -7,6 +7,7 @@ const lgaRouter = require("./routes/lgaRoutes");
 const historicalRoutes = require("./routes/historical/index");
 const lengthRoutes = require("./routes/length/index");
 const spendRoutes = require("./routes/spend/index");
+const snapshotRoutes = require("./routes/snapshot");
 
 
 dotenv.config();
@@ -53,6 +54,7 @@ app.use("/api", lgaRouter);
 app.use("/api/historical", historicalRoutes);
 app.use("/api/length_data", lengthRoutes);
 app.use("/api/spend_data", spendRoutes);
+app.use("/api/snapshot", snapshotRoutes);
 
 
 app.listen(PORT, () => {

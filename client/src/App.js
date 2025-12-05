@@ -16,9 +16,10 @@ import CompareOccupancy from "./Pages/compare_occupancy"
 import ApiTest from "./Pages/api_test";
 import Contact from "./Pages/Contact";
 import Dashboard from "./Pages/Dashboard";
+import Spend from "./Pages/spend";
 import Login from "./Pages/auth/Login";
 import Register from "./Pages/auth/Register";
-import UserAdmin from "./Pages/admin/UserAdmin";
+import UserAdmin from "./Pages/admin/UserAdmin";  
 import PrivateRoutes from "./routes/PrivateRoutes";
 import Footer from "./Components/footer";
 import "./index.css";
@@ -94,6 +95,8 @@ function App() {
 
             <Route element={<PrivateRoutes />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/spend" element={<Spend />} />
+
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/users" element={<UserAdmin />} />
               <Route path="/admin/feedback" element={<FeedbackAdmin />} />
