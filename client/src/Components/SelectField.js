@@ -9,6 +9,7 @@ export default function SelectField({
   onChange,
   palceholder,
   firstOption,
+  disabled = false,
 }) {
   let id = `select${text}`;
   return (
@@ -20,6 +21,7 @@ export default function SelectField({
         id={id}
         value={value}
         palceholder={palceholder}
+        disabled={disabled}
         onChange={(event) => {
           onChange(event.target.value);
         }}
