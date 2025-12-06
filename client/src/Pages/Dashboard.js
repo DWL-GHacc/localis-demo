@@ -10,6 +10,7 @@ export default function Dashboard() {
   const defaultRegion = userName?.region;
 
   return (
+    <div className="dashboard-bg">
     <Container className="py-5">
       {/* Page heading */}
       <header className="mb-4">
@@ -80,7 +81,7 @@ export default function Dashboard() {
         defaultRegion={defaultRegion}
       />
     </Container>
-
+</div>
     
   );
 }

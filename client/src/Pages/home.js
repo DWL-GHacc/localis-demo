@@ -14,10 +14,10 @@ return (
                     <p className="lead mb-4">Access flight, spending and visitor movement data - tailored to your region and built for smarter decisions.
                     </p>
                     <div className="d-flex gap-2 flex-wrap">
-                        <Button as={Link} to={isLoggedIn ? "/dashboard" : "/user/login"} className="btn-localis-primary">
+                        <Button as={Link} to={isLoggedIn ? "/dashboard" : "/user/login"} variant="success">
                         {isLoggedIn ? "Go to Dashboard" : "Log In to your Hub"}
                         </Button>
-                        <Button as={Link} to="/about" variant="secondary">
+                        <Button as={Link} to="/about" variant="light">
                         Learn More</Button>
                     </div>
                 </div>
@@ -112,10 +112,10 @@ return (
                 Ready to explore your destination's insights?
             </h2>
             <div className="d-flex justify-content-center gap-2">
-                <Button as={Link} to={isLoggedIn ? "/dashboard" : "/user/login"} variant="dark">
+                <Button as={Link} to={isLoggedIn ? "/dashboard" : "/user/login"} variant="success">
                 {isLoggedIn ? "Open Dashboard" : "Log In"}
                 </Button>
-                <Button as={Link} to="/user/register" variant="secondary">Request Access</Button>
+                <Button as={Link} to="/user/register" variant="warning">Request Access</Button>
             </div>
         </Container>
     </section>

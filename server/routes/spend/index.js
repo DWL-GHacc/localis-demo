@@ -250,5 +250,52 @@ router.get("/monthly_spend_per_region", async (req, res, next) => {
     }
 });
 
+//Get spend by region & Category
+router.get("/spend_by_region_category", async(req, res, next) => {
+  const { year, month } = req.query;
+  try {
+    const db = req.db;
+
+    let query = db("spend_data")
+      .select(
+        "region",
+        "category",
+        db.raw("YEAR(spend_date) AS year"),
+        db.raw("MONTH(spend_date) AS month"),
+        db.raw("SUM(spend) AS total_spend"),
+        db.raw("SUM(no_txns) AS total_txns")
+      )
+      .groupBy(
+        "region",
+        "category",
+        db.raw("YEAR(spend_date)"),
+        db.raw("MONTH(spend_date)")
+      )
+      .orderBy([
+        { column: "year", order:"desc" },
+        { column: "month", order: "desc" },
+        { column: "total_spend", order:"desc" },
+      ]);
+
+      if (year) {
+        query = query.whereRaw("YEAR(spend_date) = ?", [year]);
+      }
+
+      if (month) {
+        const monthNum = Number(month);
+        query = query.whereRaw("MONTH(spend_date) = ?", [monthNum]);
+      }
+
+      const rows = await query;
+      return res.json({ Error: false, Message: "success", Data: rows });
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      Error: true,
+      Message: "Error executing MySQL query",
+    });
+  }
+});
+
 
 module.exports = router;

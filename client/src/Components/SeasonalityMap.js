@@ -1,5 +1,3 @@
-// client/src/Components/SeasonalityMap.js
-
 import { useEffect, useState, useMemo } from "react";
 import { Card, Form, Spinner, Alert } from "react-bootstrap";
 import { Chart } from "react-google-charts";
@@ -215,7 +213,7 @@ export default function SeasonalityMap({ isAdmin }) {
           )
         )}
 
-        {/* Mini legend - for a cleaner looking chart*/}
+        {/* Legend */}
         {regionTotals.length > 0 && (
           <div className="mt-2 small text-muted">
             <strong>Current view:</strong> {selectedMonth}/{selectedYear}

@@ -17,12 +17,12 @@ export default function Header({
     if (onLogOut) {
       onLogOut();
     }
-    navigate("/"); // send them back to home
+    navigate("/");
   };
 
   return (
     <header>
-      <Navbar bg="body" expand="md">
+      <Navbar bg="muted" expand="md">
         <Container fluid>
           {/* Logo – click to go home */}
           <Navbar.Brand
@@ -40,7 +40,6 @@ export default function Header({
 
           <Navbar.Toggle aria-controls="navbarSupportedContent" />
           <Navbar.Collapse id="navbarSupportedContent">
-            {/* LEFT SIDE NAV */}
             <Nav className="me-auto">
               <Nav.Link as={NavLink} to="/" end>
                 Home
@@ -59,7 +58,6 @@ export default function Header({
               )}
             </Nav>
 
-            {/* RIGHT SIDE – login/register OR user + logout */}
             <Nav className="ms-auto align-items-center">
               {!isLoggedIn && (
                 <>

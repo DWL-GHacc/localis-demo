@@ -28,9 +28,15 @@ code {
 
 .dih-preview {
   height: 300px;
-  background: linear-gradient(180deg, #ffffff 0%, #f2fbf8 100%);
+  background-image: url("../public/images/dashboard.png"),
+                    linear-gradient(180deg, #73a18b 0%, #f2fbf8 100%);
+
+  background-size: contain; 
+  background-position: center; 
+  background-repeat: no-repeat;
   border: 1px solid #e6f2ef;
   box-shadow: 0 8px 24px rgba(10,61,50,.12);
+
 }
 
 /* ----HERO----- */
@@ -136,6 +142,7 @@ code {
 
 
 /*---DASHBOARD STYLING--*/
+
 
 .dashboard-card-img {
   object-fit: cover;
