@@ -3,10 +3,12 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const usersRouter = require("./routes/users");
-//const lgaRouter = require("./routes/lgaRoutes");
-////const historicalRoutes = require("./routes/historical/index");
-//const lengthRoutes = require("./routes/length/index");
-//const spendRoutes = require("./routes/spend/index");
+const lgaRouter = require("./routes/lgaRoutes");
+const historicalRoutes = require("./routes/historical/index");
+const lengthRoutes = require("./routes/length/index");
+const spendRoutes = require("./routes/spend/index");
+const snapshotRoutes = require("./routes/snapshot");
+
 
 
 dotenv.config();
@@ -49,11 +51,11 @@ app.get("/api/health", (req, res) => {
 });
 
 // 🔗 Mount all LGA-related routes under /api
-//app.use("/api", lgaRouter);
-//app.use("/api/historical", historicalRoutes);
-////app.use("/api/length_data", lengthRoutes);
-//app.use("/api/spend_data", spendRoutes);
-
+app.use("/api", lgaRouter);
+app.use("/api/historical", historicalRoutes);
+app.use("/api/length_data", lengthRoutes);
+app.use("/api/spend_data", spendRoutes);
+app.use("/api/snapshot", snapshotRoutes);
 
 app.listen(PORT, () => {
   console.log(`Localis API listening on http://localhost:${PORT}`);

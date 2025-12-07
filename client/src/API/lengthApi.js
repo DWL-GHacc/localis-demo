@@ -3,47 +3,47 @@ import { useState, useEffect } from "react";
 
 // Get all length data
 const getLengthAllData = async () => {
-  const url = "http://localhost:3000/api/length_data";
+  const url = "https://localis-api.onrender.com/api/length_data";
 
   return fetch(url).then((response) => response.json());
 };
 
 // Get distinct LGAs names from length data
 const getLengthDistinctLGAs = async () => {
-  const url = "http://localhost:3000/api/length_data/distinct_lgas_length";
+  const url = "https://localis-api.onrender.com/api/length_data/distinct_lgas_length";
 
   return fetch(url).then((response) => response.json());
 };
 
 // Get data range for length data
 const getLengthDataRange = async () => {
-  const url = "http://localhost:3000/api/length_data/data_range";
+  const url = "https://localis-api.onrender.com/api/length_data/data_range";
   return fetch(url).then((response) => response.json());
 };
 
 // Get average LOS and BW per LGA
 const getLengthAverageLOSBWPerLGA = async () => {
-  const url = "http://localhost:3000/api/length_data/ave_LOS_BW_LGA";
+  const url = "https://localis-api.onrender.com/api/length_data/ave_LOS_BW_LGA";
 
   return fetch(url).then((response) => response.json());
 };
 
 // Get average LOS for a given period
 const getLengthAverageLOSPeroid = async (start, end) => {
-  const url = `http://localhost:3000/api/length_data/ave_LOS_period?start=${start}&end=${end}`;
+  const url = `https://localis-api.onrender.com/api/length_data/ave_LOS_period?start=${start}&end=${end}`;
   return fetch(url).then((response) => response.json());
 };
 
 // Get average LOS and BW by LGA over time
 const getLengthAverageLOSBWPerLGAOverTime = async (lga) => {
-  const url = `http://localhost:3000/api/length_data/ave_LOS_BW_LGA?lga_name=&{lga}`;
+  const url = `https://localis-api.onrender.com/api/length_data/ave_LOS_BW_LGA?lga_name=&{lga}`;
     return fetch(url)
     .then((response) => response.json());
 };
 
 // Get average rates, histroical occupancy, length of stay, and booking window
 const getLengthAverageRates = async () => {
-  const url = "http://localhost:3000/api/length_data/ave_rates_histOcc_LOS";
+  const url = "https://localis-api.onrender.com/api/length_data/ave_rates_histOcc_LOS";
 
   return fetch(url)
   .then((response) => response.json());
@@ -51,7 +51,7 @@ const getLengthAverageRates = async () => {
 
 // Get montly LOS and BW per LGA
 const getLengthMonthlyLOSBWPerLGA = async () => {
-  const url = "http://localhost:3000/api/length_data/monthly_LOS_BW_LGA";
+  const url = "https://localis-api.onrender.com/api/length_data/monthly_LOS_BW_LGA";
 
   return fetch(url)
     .then((response) => response.json());

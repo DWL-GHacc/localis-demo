@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 
 // Get all historcial data
 const getHistoricalAllData = async () => {
-  const url = "http://localhost:3000/api/historical";
+  const url = "https://localis-api.onrender.com/api/historical";
   
   return fetch(url)
     .then((response) => response.json())
@@ -12,7 +12,7 @@ const getHistoricalAllData = async () => {
 
 // Get data range for historical data
 const getHistoricalDataRange = async () => {
-  const url = "http://localhost:3000/api/historical/data_range";
+  const url = "https://localis-api.onrender.com/api/historical/data_range";
   
   return fetch(url)
     .then((response) => response.json())
@@ -20,28 +20,28 @@ const getHistoricalDataRange = async () => {
 
 // Get average rates joined with length of stay and booking window
 const getHistoricalAverageRates = async () => {
-  const url = "http://localhost:3000/api/historical/average_rates"; 
+  const url = "https://localis-api.onrender.com/api/historical/average_rates"; 
   return fetch(url)
     .then((response) => response.json());
 };
 
 // Get distinct LGA names from length data
 const getHistoricalDistinctLGAs = async () => {
-  const url = "http://localhost:3000/api/historical/distinct_lgas_historical"; 
+  const url = "https://localis-api.onrender.com/api/historical/distinct_lgas_historical"; 
   return fetch(url)
     .then((response) => response.json());
 };  
 
 // Get monsthly occupancy and ADR per LGA
 const getHistoricalMonthlyOccupancyADRPerLGA = async () => {
-  const url = "http://localhost:3000/api/historical/monthly_occupancy_ADR_per_LGA"; 
+  const url = "https://localis-api.onrender.com/api/historical/monthly_occupancy_ADR_per_LGA"; 
   return fetch(url)
     .then((response) => response.json());
 };
 
 // Get historical occupancy and length of stay for a single LGA
 const getHistoricalSingleLGAHistOccLOS = async (lga) => {
-  const url = `http://localhost:3000/api/historical/single_LGA_histOcc_LOS?lga_name=${lga}`; 
+  const url = `https://localis-api.onrender.com/api/historical/single_LGA_histOcc_LOS?lga_name=${lga}`; 
 
   return fetch(url)
     .then((response) => response.json());
