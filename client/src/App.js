@@ -14,16 +14,17 @@ import Header from "./Components/header";
 import Home from "./Pages/home";
 import CompareOccupancy from "./Pages/compare_occupancy"
 import ApiTest from "./Pages/api_test";
-import Contact from "./Pages/Contact";
 import Dashboard from "./Pages/Dashboard";
+import Spend from "./Pages/spend";
 import Login from "./Pages/auth/Login";
 import Register from "./Pages/auth/Register";
-import UserAdmin from "./Pages/admin/UserAdmin";
+import UserAdmin from "./Pages/admin/UserAdmin";  
 import PrivateRoutes from "./routes/PrivateRoutes";
 import Footer from "./Components/footer";
 import "./index.css";
 import Admin from "./Pages/Admin";
 import FeedbackAdmin from "./Pages/admin/FeedbackAdmin";
+import Demo from "./Pages/Demo";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -84,7 +85,7 @@ function App() {
         <Container fluid className="flex-grow-1">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/contact" element={<Contact />} />
+            <Route path="/demo" element={<Demo />} />
 
             <Route
               path="/user/login"
@@ -94,6 +95,8 @@ function App() {
 
             <Route element={<PrivateRoutes />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/spend" element={<Spend />} />
+
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/users" element={<UserAdmin />} />
               <Route path="/admin/feedback" element={<FeedbackAdmin />} />

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 export default function Home() {
     const isLoggedIn = !!localStorage.getItem("token");
 return (
-    <Container>
+    <>
     <section className="hero-banner d-flex align-items-center">
         <Container>
             <Row>
@@ -13,11 +13,11 @@ return (
                     <h1 className="display-5 fw-bold mb-3">See your destination differently</h1>
                     <p className="lead mb-4">Access flight, spending and visitor movement data - tailored to your region and built for smarter decisions.
                     </p>
-                    <div className="d-flex gap-2">
-                        <Button as={Link} to={isLoggedIn ? "/dashboard" : "/login"} variant="light">
+                    <div className="d-flex gap-2 flex-wrap">
+                        <Button as={Link} to={isLoggedIn ? "/dashboard" : "/user/login"} variant="success">
                         {isLoggedIn ? "Go to Dashboard" : "Log In to your Hub"}
                         </Button>
-                        <Button as={Link} to="/about" variant="secondary">
+                        <Button as={Link} to="/about" variant="light">
                         Learn More</Button>
                     </div>
                 </div>
@@ -98,7 +98,7 @@ return (
                     Trusted by 250+ councils, RTO's and operators accross Australia to support funding, planning and economic development.
                 </p>
                 <div className="mt-4">
-                    <img src="./images/black-localis-logo.svg" alt="Localis" style={{ height: "50px"}}/>
+                    <img src="/images/black-localis-logo.svg" alt="Localis" style={{ height: "50px"}}/>
                 </div>
 
                 </Col>
@@ -112,13 +112,13 @@ return (
                 Ready to explore your destination's insights?
             </h2>
             <div className="d-flex justify-content-center gap-2">
-                <Button as={Link} to={isLoggedIn ? "/dashboard" : "/login"} variant="dark">
+                <Button as={Link} to={isLoggedIn ? "/dashboard" : "/user/login"} variant="success">
                 {isLoggedIn ? "Open Dashboard" : "Log In"}
                 </Button>
-                <Button as={Link} to="/contact" variant="secondary">Request Access</Button>
+                <Button as={Link} to="/user/register" variant="warning">Request Access</Button>
             </div>
         </Container>
     </section>
-    </Container>
+   </>
 );
 }
