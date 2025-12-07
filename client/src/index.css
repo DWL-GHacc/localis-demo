@@ -69,7 +69,7 @@ code {
   }
 
   .hero-content {
-    /* optional: help text stand out on busy mobile images - May or may not keep */ 
+    /* bg to help text stand out on busy mobile images - May or may not keep */ 
     background-color: rgba(255, 255, 255, 0.9);
   }
 }
@@ -98,7 +98,7 @@ code {
   }
 }
 
-/*-- Button Styles--*/
+/*-- Button Styles/ CURRENTLY BEING OVERRIDDEN BY BOOTSTRAP :( --*/
 
 /* Base dashboard button styling */
 .dashboard-btn,
