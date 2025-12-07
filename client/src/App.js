@@ -1,9 +1,5 @@
 // client/src/App.js
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Container, Modal } from "react-bootstrap";
 import { useState } from "react";
 
@@ -12,7 +8,8 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 import Header from "./Components/header";
 import Home from "./Pages/home";
-import CompareOccupancy from "./Pages/compare_occupancy"
+import CompareOccupancy from "./Pages/compare_occupancy";
+import AccommodationInSights from "./Pages/accomodation_insights";
 import ApiTest from "./Pages/api_test";
 import Contact from "./Pages/Contact";
 import Dashboard from "./Pages/Dashboard";
@@ -26,9 +23,7 @@ import Admin from "./Pages/Admin";
 import FeedbackAdmin from "./Pages/admin/FeedbackAdmin";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    !!localStorage.getItem("token")
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
 
@@ -104,8 +99,12 @@ function App() {
               element={<div className="text-muted p-4">Page not Found</div>}
             />
             <Route
-              path="/compare-occupancy"
+              path="/compare_occupancy"
               element={<CompareOccupancy />}
+            ></Route>
+            <Route
+              path="/accomodation_insights"
+              element={<AccommodationInSights />}
             ></Route>
             <Route path="/api_test" element={<ApiTest />}></Route>
           </Routes>
