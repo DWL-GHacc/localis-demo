@@ -385,4 +385,112 @@ export function getAllLGAAvgBW(rows = [], year) {
   }
 
   return result;
+};
+
+export function getAllRegionsYearAvgOcc(rows = [], year) {
+  if (!Array.isArray(rows)) return [["Month"]];
+
+  const numericYear = Number(year);
+
+  const filtered = rows.filter((r) => Number(r.year) === numericYear);
+
+  const lgas = [...new Set(filtered.map((r) => r.lga_name))].sort();
+
+  const result = [["Month", ...lgas]];
+
+  for (let m = 1; m <= 12; m++) {
+    const row = [monthNumToName(m)];
+
+    lgas.forEach((lga) => {
+      const rec = filtered.find(
+        (r) => r.lga_name === lga && Number(r.month) === m
+      );
+      row.push(rec ? Number(rec.avg_occupancy) : null);
+    });
+
+    result.push(row);
+  }
+
+  return result;
+};
+
+export function getAllRegionsYearADR(rows = [], year) {
+  if (!Array.isArray(rows)) return [["Month"]];
+
+  const numericYear = Number(year);
+
+  const filtered = rows.filter((r) => Number(r.year) === numericYear);
+
+  const lgas = [...new Set(filtered.map((r) => r.lga_name))].sort();
+
+  const result = [["Month", ...lgas]];
+
+  for (let m = 1; m <= 12; m++) {
+    const row = [monthNumToName(m)];
+
+    lgas.forEach((lga) => {
+      const rec = filtered.find(
+        (r) => r.lga_name === lga && Number(r.month) === m
+      );
+      row.push(rec ? Number(rec.avg_adr) : null);
+    });
+
+    result.push(row);
+  }
+
+  return result;
+};
+
+export function getAllRegionsYearLOS(rows = [], year) {
+  if (!Array.isArray(rows)) return [["Month"]];
+
+  const numericYear = Number(year);
+
+  const filtered = rows.filter((r) => Number(r.year) === numericYear);
+
+  const lgas = [...new Set(filtered.map((r) => r.lga_name))].sort();
+
+  const result = [["Month", ...lgas]];
+
+  for (let m = 1; m <= 12; m++) {
+    const row = [monthNumToName(m)];
+
+    lgas.forEach((lga) => {
+      const rec = filtered.find(
+        (r) => r.lga_name === lga && Number(r.month) === m
+      );
+      row.push(rec ? Number(rec.avg_length_of_stay) : null);
+    });
+
+    result.push(row);
+  }
+
+  return result;
+}
+
+export function getAllRegionsYearBW(rows = [], year) {
+  if (!Array.isArray(rows)) return [["Month"]];
+
+  const numericYear = Number(year);
+
+  const filtered = rows.filter((r) => Number(r.year) === numericYear);
+
+  const lgas = [...new Set(filtered.map((r) => r.lga_name))].sort();
+
+  const result = [["Month", ...lgas]];
+
+  for (let m = 1; m <= 12; m++) {
+    const row = [monthNumToName(m)];
+
+    lgas.forEach((lga) => {
+      const rec = filtered.find(
+        (r) => r.lga_name === lga && Number(r.month) === m
+      );
+      row.push(rec ? Number(rec.avg_booking_window) : null);
+    });
+
+    result.push(row);
+  }
+
+  return result;
 }

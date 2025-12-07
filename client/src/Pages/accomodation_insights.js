@@ -35,6 +35,10 @@ import {
   getCompareLGAsADR,
   getCompareLGAsLOS,
   getCompareLGAsBW,
+  getAllRegionsYearAvgOcc,
+  getAllRegionsYearADR,
+  getAllRegionsYearLOS,
+  getAllRegionsYearBW
 } from "../utils/chartHelpers";
 
 import {
@@ -280,6 +284,8 @@ export default function AccomodationInsights() {
     const single1Len = lengthSingleLGAAvgBWandLOS_1.data?.Data || [];
     const single2Len = lengthSingleLGAAvgBWandLOS_2.data?.Data || [];
 
+    console.log("Compare ALL", getAllLGAAvgOcc(monthlyRows, params.year));
+
     return (
       <div>
         {/* OCCUPANCY */}
@@ -287,7 +293,7 @@ export default function AccomodationInsights() {
           chartType="ColumnChart"
           data={
             params.lga === "All Regions"
-              ? getAllLGAAvgOcc(monthlyRows, params.year)
+              ? getAllRegionsYearAvgOcc(monthlyRows, params.year)
               : getCompareLGAsAvgOcc(
                   single1Occ,
                   single2Occ,
@@ -312,7 +318,7 @@ export default function AccomodationInsights() {
           chartType="ColumnChart"
           data={
             params.lga === "All Regions"
-              ? getAllLGAAvgADR(monthlyRows, params.year)
+              ? getAllRegionsYearADR(monthlyRows, params.year)
               : getCompareLGAsADR(
                   single1Occ,
                   single2Occ,
@@ -333,7 +339,7 @@ export default function AccomodationInsights() {
           chartType="ColumnChart"
           data={
             params.lga === "All Regions"
-              ? getAllLGAAvgLOS(losBwRows, params.year)
+              ? getAllRegionsYearLOS(losBwRows, params.year)
               : getCompareLGAsLOS(
                   single1Len,
                   single2Len,
@@ -354,7 +360,7 @@ export default function AccomodationInsights() {
           chartType="ColumnChart"
           data={
             params.lga === "All Regions"
-              ? getAllLGAAvgBW(losBwRows, params.year)
+              ? getAllRegionsYearBW(losBwRows, params.year)
               : getCompareLGAsBW(
                   single1Len,
                   single2Len,
