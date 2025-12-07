@@ -38,7 +38,7 @@ import {
   getAllRegionsYearAvgOcc,
   getAllRegionsYearADR,
   getAllRegionsYearLOS,
-  getAllRegionsYearBW
+  getAllRegionsYearBW,
 } from "../utils/chartHelpers";
 
 import {
@@ -65,9 +65,17 @@ export default function AccomodationInsights() {
     year: null,
     month: null,
     ranking: "",
+    occChartType: "ColumnChart",
+    adrChartType: "ColumnChart",
+    losChartType: "ColumnChart",
+    bwChartType: "ColumnChart"
   });
 
   const [activeTab, setActiveTab] = useState("yearly_performance");
+  const [occChartType, setOccChartType] = useState("ColumnChart");
+  const [adrChartType, setAdrChartType] = useState("ColumnChart");
+  const [losChartType, setLosChartType] = useState("ColumnChart");
+  const [bwChartType, setBwChartType] = useState("ColumnChart");
 
   // Shared dataset (from all APIs)
   const shared = useSharedData(params.lga, params.lga2);
@@ -109,6 +117,12 @@ export default function AccomodationInsights() {
   const handleSubmit = (event) => {
     event.preventDefault();
 
+    // Reset chart types
+    setOccChartType("ColumnChart");
+    setAdrChartType("ColumnChart");
+    setLosChartType("ColumnChart");
+    setBwChartType("ColumnChart");
+
     // Reset Params
     setParams({
       lga: "",
@@ -116,6 +130,10 @@ export default function AccomodationInsights() {
       year: null,
       month: null,
       ranking: "",
+      occChartType: "ColumnChart",
+      adrChartType: "ColumnChart",
+      losChartType: "ColumnChart",
+      bwChartType: "ColumnChart",
     });
 
     // Yearly Performance (only LGA + year required)
@@ -157,6 +175,10 @@ export default function AccomodationInsights() {
       year: year || "",
       month: month,
       ranking: ranking || "",
+      occChartType: "ColumnChart",
+      adrChartType: "ColumnChart",
+      losChartType: "ColumnChart",
+      bwChartType: "ColumnChart",
     });
   };
 
@@ -171,9 +193,34 @@ export default function AccomodationInsights() {
           <Col md={6}>
             <Card className="h-100 shadow-sm border-0">
               <Card.Body>
+                <div className="d-flex justify-content-end mb-2">
+                  <Button
+                    size="sm"
+                    variant={
+                      occChartType === "ColumnChart"
+                        ? "primary"
+                        : "outline-primary"
+                    }
+                    className="me-2"
+                    onClick={() => setOccChartType("ColumnChart")}
+                  >
+                    Bar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={
+                      occChartType === "LineChart"
+                        ? "primary"
+                        : "outline-primary"
+                    }
+                    onClick={() => setOccChartType("LineChart")}
+                  >
+                    Line
+                  </Button>
+                </div>
                 <div style={{ height: "320px" }}>
                   <Chart
-                    chartType="ColumnChart"
+                    chartType={occChartType}
                     width="100%"
                     height="100%"
                     data={
@@ -200,9 +247,34 @@ export default function AccomodationInsights() {
           <Col md={6}>
             <Card className="h-100 shadow-sm border-0">
               <Card.Body>
+                <div className="d-flex justify-content-end mb-2">
+                  <Button
+                    size="sm"
+                    variant={
+                      adrChartType === "ColumnChart"
+                        ? "primary"
+                        : "outline-primary"
+                    }
+                    className="me-2"
+                    onClick={() => setAdrChartType("ColumnChart")}
+                  >
+                    Bar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={
+                      adrChartType === "LineChart"
+                        ? "primary"
+                        : "outline-primary"
+                    }
+                    onClick={() => setAdrChartType("LineChart")}
+                  >
+                    Line
+                  </Button>
+                </div>
                 <div style={{ height: "320px" }}>
                   <Chart
-                    chartType="LineChart"
+                    chartType={adrChartType}
                     width="100%"
                     height="100%"
                     data={
@@ -227,9 +299,34 @@ export default function AccomodationInsights() {
           <Col md={6}>
             <Card className="h-100 shadow-sm border-0">
               <Card.Body>
+                <div className="d-flex justify-content-end mb-2">
+                  <Button
+                    size="sm"
+                    variant={
+                      losChartType === "ColumnChart"
+                        ? "primary"
+                        : "outline-primary"
+                    }
+                    className="me-2"
+                    onClick={() => setLosChartType("ColumnChart")}
+                  >
+                    Bar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={
+                      losChartType === "LineChart"
+                        ? "primary"
+                        : "outline-primary"
+                    }
+                    onClick={() => setLosChartType("LineChart")}
+                  >
+                    Line
+                  </Button>
+                </div>
                 <div style={{ height: "320px" }}>
                   <Chart
-                    chartType="ColumnChart"
+                    chartType={losChartType}
                     width="100%"
                     height="100%"
                     data={
@@ -252,8 +349,33 @@ export default function AccomodationInsights() {
             <Card className="h-100 shadow-sm border-0">
               <Card.Body>
                 <div style={{ height: "320px" }}>
+                  <div className="d-flex justify-content-end mb-2">
+                    <Button
+                      size="sm"
+                      variant={
+                        bwChartType === "ColumnChart"
+                          ? "primary"
+                          : "outline-primary"
+                      }
+                      className="me-2"
+                      onClick={() => setBwChartType("ColumnChart")}
+                    >
+                      Bar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={
+                        bwChartType === "LineChart"
+                          ? "primary"
+                          : "outline-primary"
+                      }
+                      onClick={() => setBwChartType("LineChart")}
+                    >
+                      Line
+                    </Button>
+                  </div>
                   <Chart
-                    chartType="ColumnChart"
+                    chartType={bwChartType}
                     width="100%"
                     height="100%"
                     data={
@@ -414,6 +536,11 @@ export default function AccomodationInsights() {
     setMonth("");
     setRanking("");
 
+    setOccChartType("ColumnChart");
+    setAdrChartType("ColumnChart");
+    setLosChartType("ColumnChart");
+    setBwChartType("ColumnChart");
+
     // reset Params
     setParams({
       lga: "",
@@ -421,6 +548,10 @@ export default function AccomodationInsights() {
       year: null,
       month: null,
       ranking: "",
+      occChartType:"ColumnChart",
+      adrChartType: "ColumnChart",
+      losChartType: "ColumnChart",
+      bwChartType: "ColumnChart"
     });
 
     setErrorMessage("");
