@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 
 // Get all historcial data
 const getHistoricalAllData = async () => {
-  const url = "http://localis-api.onrender.com/api/historical";
+  const url = "https://localis-demo.onrender.com/api/historical";
   
   return fetch(url)
     .then((response) => response.json())
@@ -12,7 +12,7 @@ const getHistoricalAllData = async () => {
 
 // Get data range for historical data
 const getHistoricalDataRange = async () => {
-  const url = "http://localis-api.onrender.com/api/historical/data_range";
+  const url = "https://localis-demo.onrender.com/api/historical/data_range";
   
   return fetch(url)
     .then((response) => response.json())
