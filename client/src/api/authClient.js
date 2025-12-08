@@ -1,5 +1,5 @@
 // client/src/api/authClient.js
-const API_BASE = "http:\\localis-demo.onrender.com";
+const API_BASE = "http://localis-demo.onrender.com";
 // later: use env: import.meta.env.VITE_API_BASE_URL || "https://localis-api.onrender.com";
 
 export const authFetch = async (path, options = {}) => {
