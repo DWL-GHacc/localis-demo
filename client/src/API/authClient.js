@@ -1,6 +1,6 @@
 // client/src/api/authClient.js
 const API_BASE = "http://localis-api.onrender.com";
-// later: use env: import.meta.env.VITE_API_BASE_URL || "https://localis-api.onrender.com";
+// later: use env: import.meta.env.VITE_API_BASE_URL || "https://localis-demo.onrender.com";
 
 export const authFetch = async (path, options = {}) => {
   const token = localStorage.getItem("token");

@@ -1,7 +1,7 @@
 // client/src/api/lengthAPI.js
 import { useState, useEffect } from "react";
 
-const API_BASE = "https://localis-api.onrender.com";
+const API_BASE = "https://localis-demo.onrender.com";
 
 // Get all length data
 const getLengthAllData = async () => {

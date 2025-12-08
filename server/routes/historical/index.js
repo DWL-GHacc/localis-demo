@@ -119,7 +119,7 @@ router.get("/single_LGA_histOcc_LOS", async (req, res, next) => {
 
 // const lga = "Gold Coast";  // For testing purpose
 // frontend request URL example:
-// https://localis-api.onrender.com/historical/single_LGA_histOcc_LOS?lga_name=Gold%20Coast
+// https://localis-demo.onrender.com/historical/single_LGA_histOcc_LOS?lga_name=Gold%20Coast
 
   if(!lga_name){
     return res.status(400).json({ Error: true, Message: "Missing lga_name" });

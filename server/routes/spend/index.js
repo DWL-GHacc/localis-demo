@@ -191,7 +191,7 @@ router.get("/category_spend_per_region", async (req, res, next) => {
 
     // const region = "Gold Coast"; // for testing
     // frontend request URL example:
-    // https://localis-api.onrender.com/spend_data/category_spend_per_region?region=Gold%20Coast
+    // https://localis-demo.onrender.com/spend_data/category_spend_per_region?region=Gold%20Coast
 
     if (!region) {
       return res.status(400).json({ Error: true, Message: "Missing region parameter" });

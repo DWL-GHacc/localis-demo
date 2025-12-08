@@ -4,69 +4,69 @@ import { useState, useEffect } from "react";
 
 // Get all spend data
 const getLengthAllData = async () => {
-  const url = "https://localis-api.onrender.com/api/spend_data";
+  const url = "https://localis-demo.onrender.com/api/spend_data";
 
   return fetch(url).then((response) => response.json());
 };
 
 // Get distinct LGAs from spend data
 const getSpendDisttinctLGAs = async () => {
-  const url = "https://localis-api.onrender.com/api/spend_data/distinct_lgas_spend";
+  const url = "https://localis-demo.onrender.com/api/spend_data/distinct_lgas_spend";
 
   return fetch(url).then((response) => response.json());
 };
 
 // Get data range for spend data
 const getSpendDataRange = async () => {
-  const url = "https://localis-api.onrender.com/api/spend_data/data_range";
+  const url = "https://localis-demo.onrender.com/api/spend_data/data_range";
 
   return fetch(url).then((response) => response.json());
 };
 
 // Get distinct categories from spend data
 const getSpendCategories = async () => {
-  const url = "https://localis-api.onrender.com/api/spend_data/categories";
+  const url = "https://localis-demo.onrender.com/api/spend_data/categories";
 
   return fetch(url).then((response) => response.json());
 };
 
 // Get distinct regions from spend data
 const getSpendRegions = async () => {
-  const url = "https://localis-api.onrender.com/api/spend_data/regions";
+  const url = "https://localis-demo.onrender.com/api/spend_data/regions";
 
   return fetch(url).then((response) => response.json());
 };
 
 // Get spend sum by category
 const getSpendSumByCategories = async (category) => {
-  const url = "https://localis-api.onrender.com/api/spend_data/spend_by_category";
+  const url = "https://localis-demo.onrender.com/api/spend_data/spend_by_category";
 
   return fetch(url).then((response) => response.json());
 };
 
 const getSpendIntensityAllRegions = async () => {
-  const url = "https://localis-api.onrender.com/api/spend_data/spend_intensity";
+  const url = "https://localis-demo.onrender.com/api/spend_data/spend_intensity";
 
   return fetch(url).then((response) => response.json());
 };
 
 // Get Spend Sum by all regions
 const getSpendSumByRegions = async () => {
-  const url = "https://localis-api.onrender.com/api/spend_data/spend_by_region";
+  const url = "https://localis-demo.onrender.com/api/spend_data/spend_by_region";
 
   return fetch(url).then((response) => response.json());
 };
 
 // Get spend sum by catergoris per region
 const getSpendSumByCategoriesPerRegion = async (region) => {
-  const url = `https://localis-api.onrender.com/api/spend_data/category_spend_per_region?region=${region}`;
+  const url = `https://localis-demo.onrender.com/api/spend_data/category_spend_per_region?region=${region}`;
 
   return fetch(url).then((response) => response.json());
 };
 
 // Get monthly spend sum per regiosn
 const getSpendMonthlySumPerRegion = async () => {
-    const url = "https://localis-api.onrender.com/api/spend_data/monthly_spend_per_region";
+    const url = "https://localis-demo.onrender.com/api/spend_data/monthly_spend_per_region";
     
     return fetch(url).then((response) => response.json());
 };
