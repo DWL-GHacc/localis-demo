@@ -10,6 +10,7 @@ const spendRoutes = require("./routes/spend/index");
 const snapshotRoutes = require("./routes/snapshot");
 
 
+
 dotenv.config();
 
 const app = express();
@@ -56,8 +57,7 @@ app.use("/api/length_data", lengthRoutes);
 app.use("/api/spend_data", spendRoutes);
 app.use("/api/snapshot", snapshotRoutes);
 
-
 app.listen(PORT, () => {
-  console.log(`Localis API listening on http://localhost:${PORT}`);
+  console.log(`Localis API listening on http://localis-api.onrender.com:${PORT}`);
 });
 

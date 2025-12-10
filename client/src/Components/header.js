@@ -87,19 +87,4 @@ export default function Header({
                     <strong>{localStorage.getItem("userName") || "User"}</strong>
                   </Navbar.Text>
 
-                  <Button
-                    variant="outline-dark"
-                    size="sm"
-                    onClick={handleLogoutClick}
-                  >
-                    Log out
-                  </Button>
-                </>
-              )}
-            </Nav>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
-    </header>
-  );
-}
+export default Header;
