@@ -494,3 +494,13 @@ export function getAllRegionsYearBW(rows = [], year) {
 
   return result;
 }
+
+// Seanoal isghts bar chart data builder
+export function buildBarChartData(list, metric) {
+  const header = ["Month", metric];
+  const rows = list.map((item) => [
+    monthNumToName(item.month),
+    Number(item[metric]),
+  ]);
+  return [header, ...rows];
+}
