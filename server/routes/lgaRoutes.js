@@ -1,12 +1,4 @@
 // server/routes/lgaRoutes.js
-// import express from "express";
-// import {
-//   getRecentSpend,
-//   getSpendByRegionAndDate,
-//   getSpendSummaryByRegion,
-//   getHistoricalByLGA,
-//   getLengthDataByLGA,
-// } from "../queries/localisQueries.js";
 
 const express = require("express");
 //const {

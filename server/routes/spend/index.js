@@ -127,6 +127,32 @@ router.get("/spend_by_category", async (req, res, next) => {
     });
 });
 
+      if (region){
+        query = query.where("region", region);
+      }
+
+      if (start && end) {
+        query = query.whereBetween("spend_date", [start, end]);
+      } else if (start) {
+        query = query.where("spend_date", ">=", start);
+      }else if (end) {
+    query = query.where("spend_date", "<=", end);
+  }
+
+  // Group + order
+  query = query
+    .groupBy("category")
+    .orderBy("total_spend_millions", "desc");
+
+  query
+    .then((rows) => {
+      res.json({ Error: false, Message: "success", Data: rows });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.json({ Error: true, Message: "Error executing MySQL query" });
+    });
+});
 
 
 // Get spend intensity per region
@@ -221,29 +247,82 @@ router.get("/category_spend_per_region", async (req, res, next) => {
 
 // Get monthly spend per region
 router.get("/monthly_spend_per_region", async (req, res, next) => {
-    req.db
-      .from("spend_data")
+    const { region, year} = req.query;
+
+    try {
+      const db = req.db;
+
+      let query = db("spend_data")
       .select(
         "region",
-        req.db.raw("YEAR(spend_date) AS year"),
-        req.db.raw("MONTH(spend_date) AS month"),
-        req.db.raw("SUM(spend) AS total_spend"),
-        req.db.raw("SUM(no_txns) AS total_transactions"),
-        req.db.raw("SUM(cards_seen) AS total_cards_seen")
+        db.raw("YEAR(spend_date) AS year"),
+        db.raw("MONTH(spend_date) AS month"),
+        db.raw("SUM(spend) AS total_spend"),
+        db.raw("SUM(no_txns) AS total_transactions"),
+        db.raw("SUM(cards_seen) AS total_cards_seen")
+      )
+      .groupBy("region", db.raw("YEAR(spend_date)"), db.raw("MONTH(spend_date)"))
+      .orderBy(["region", "year", "month"]);
+
+      if(region) {
+        query = query.where("region", region);
+      }
+      
+      const rows = await query;
+      
+      return res.json({ Error: false, Message: "success", Data: rows });
+
+    } catch(err) {
+        console.log(err);
+        return res.json({ Error: true, Message: "Error executing MySQL query" });
+    }
+});
+
+//Get spend by region & Category
+router.get("/spend_by_region_category", async(req, res, next) => {
+  const { year, month } = req.query;
+  try {
+    const db = req.db;
+
+    let query = db("spend_data")
+      .select(
+        "region",
+        "category",
+        db.raw("YEAR(spend_date) AS year"),
+        db.raw("MONTH(spend_date) AS month"),
+        db.raw("SUM(spend) AS total_spend"),
+        db.raw("SUM(no_txns) AS total_txns")
       )
       .groupBy(
         "region",
-        req.db.raw("YEAR(spend_date)"),
-        req.db.raw("MONTH(spend_date)")
+        "category",
+        db.raw("YEAR(spend_date)"),
+        db.raw("MONTH(spend_date)")
       )
-      .orderBy(["region", "year", "month"])
-      .then((rows) => {
-        res.json({ Error: false, Message: "success", Data: rows });
-      })
-      .catch((err) => {
-        console.log(err);
-        res.json({ Error: true, Message: "Error executing MySQL query" });
-      });
+      .orderBy([
+        { column: "year", order:"desc" },
+        { column: "month", order: "desc" },
+        { column: "total_spend", order:"desc" },
+      ]);
+
+      if (year) {
+        query = query.whereRaw("YEAR(spend_date) = ?", [year]);
+      }
+
+      if (month) {
+        const monthNum = Number(month);
+        query = query.whereRaw("MONTH(spend_date) = ?", [monthNum]);
+      }
+
+      const rows = await query;
+      return res.json({ Error: false, Message: "success", Data: rows });
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      Error: true,
+      Message: "Error executing MySQL query",
+    });
+  }
 });
 //Get spend by region & Category
 router.get("/spend_by_region_category", async(req, res, next) => {
