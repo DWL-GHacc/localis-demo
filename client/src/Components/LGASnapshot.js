@@ -19,6 +19,16 @@ export default function LGASnapshot({ isAdmin, defaultRegion }) {
                 setError("");
 
                 const response = await fetch ("/api/spend_data/distinct_lgas_spend");
+
+                if(!response.ok){
+                  const errorTest = await response.text().catch(() => "");
+                  throw new Error(
+                    `Request failed with status ${response.status}${
+                      errorText ? `: ${errorText}` : ''
+                    }`
+                  );
+                }
+
                 const json = await response.json();
 
                 if(json.Error) {
@@ -27,44 +37,62 @@ export default function LGASnapshot({ isAdmin, defaultRegion }) {
 
                 const regionNames = json.Data.map((row) => row.region).filter(Boolean);
                 setRegions(regionNames);
+
                 if(!selectedRegion && regionNames.length > 0 ) {
                     setSelectedRegion(regionNames[0]);
                 }
             } catch (err) {
                 console.error(err);
-                setError("Could not load regions. Please try again later.");
+                setError(err.message || "Could not load regions. Please try again later.");
             }
         }
         fetchRegions();
     }, [])
 
     useEffect(() => {
-        if(!selectedRegion) return;
+  if (!selectedRegion) return;
 
-        async function fetchSnapshot() {
-            try {
-                setLoading(true);
-                setError("");
-                
-                const response = await fetch(`/api/snapshot?region=${encodeURIComponent(selectedRegion)}&year=${encodeURIComponent(year)}`
-            );
+  async function fetchSnapshot() {
+    try {
+      setLoading(true);
+      setError("");
 
-            const json = await response.json();
-            if(json.Error) {
-                throw new Error(json.Message || "Error fetching snapshot data");
-            }
-            setSnapshotData(json.Data || null )
+      const response = await fetch(
+        `/api/snapshot?region=${encodeURIComponent(
+          selectedRegion
+        )}&year=${encodeURIComponent(year)}`
+      );
 
-            } catch (err) {
-        console.error(err);
-        setError("Could not load snapshot data. Please try again later.");
-        setSnapshotData(null);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new Error(
+          `Request failed with status ${response.status}${
+            errorText ? `: ${errorText}` : ""
+          }`
+        );
       }
-        }
-        fetchSnapshot();
-    }, [selectedRegion, year]);
+
+      const json = await response.json();
+
+      if (json.Error) {
+        throw new Error(json.Message || "Error fetching snapshot data");
+      }
+
+      setSnapshotData(json.Data || null);
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.message || "Could not load snapshot data. Please try again later."
+      );
+      setSnapshotData(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  fetchSnapshot();
+}, [selectedRegion, year]);
+
 
     return (
     <Card className="mb-4 shadow-sm border-0 lga-snapshot-card">
