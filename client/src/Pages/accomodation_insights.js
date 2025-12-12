@@ -1066,7 +1066,7 @@ export default function AccomodationInsights() {
                 <SelectField
                   text="Select year"
                   size={2}
-                  options={allYears}
+                  options={years}
                   value={year}
                   onChange={setYear}
                   placeholder="Option"
