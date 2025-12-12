@@ -66,50 +66,79 @@ async function registerUser(req, res) {
 // ------------------------------------------------------------
 async function loginUser(req, res) {
   const { email, password } = req.body;
-
-  if (!email || !password) {
+if (!email || !password) {
     return res.status(400).json({
       error: true,
       message: "Email and password are required",
     });
   }
-
-  try {
+try {
+    // Make sure lga_scope is in your users table
     const user = await knex("users")
-      .select("id", "email", "password_hash", "full_name", "role", "is_active")
+      .select(
+        "id",
+        "email",
+        "password_hash",
+        "full_name",
+        "role",
+        "is_active",
+        "lga_scope"          // <- NEW
+      )
       .where({ email })
       .first();
-
-    if (!user) {
+if (!user) {
       return res.status(401).json({
         error: true,
         message: "Incorrect email or password",
       });
     }
-
-    if (!user.is_active) {
+if (!user.is_active) {
       return res.status(403).json({
         error: true,
         message: "Your account is not yet activated by an administrator",
       });
     }
-
-    const match = await bcrypt.compare(password, user.password_hash);
+const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
       return res.status(401).json({
         error: true,
         message: "Incorrect email or password",
       });
     }
+// --------------------------------------------------------
+    // Fetch LGA access for this user
+    // --------------------------------------------------------
+    let lgaAccess;
+if (user.lga_scope === "restricted") {
+      // Only specific LGAs for this user
+      const rows = await knex("user_lga_access")
+        .select("lga_name")          // or "lga_code"/whatever your column is
+        .where({ user_id: user.id });
+lgaAccess = rows.map((r) => r.lga_name);
+    } else {
+      
+      lgaAccess = "all";
 
-    const token = generateToken(user);
-    delete user.password_hash;
 
-    return res.status(200).json({
+    }
+// Build token payload (include lga_scope if you want it in the JWT)
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      lga_scope: user.lga_scope,
+    });
+// Don’t send password hash to the client
+    const { password_hash, ...safeUser } = user;
+
+return res.status(200).json({
       error: false,
       message: "Login successful",
       token,
-      user,
+      user: {
+        ...safeUser,
+        lgaAccess,   // <- NEW: either "all" or an array of LGA names
+      },
     });
   } catch (err) {
     console.error("Error during login:", err);
@@ -119,6 +148,7 @@ async function loginUser(req, res) {
     });
   }
 }
+
 
 // ------------------------------------------------------------
 // RENEW TOKEN (sliding session)
