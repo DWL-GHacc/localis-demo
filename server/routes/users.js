@@ -17,8 +17,8 @@ const {
   clearUserPassword,
   getUserLgaAccess,
   updateUserLgaAccess,
-  getUserLgas,
-  putUserLgas,
+  //getUserLgas,
+  //putUserLgas,
 } = require("../controllers/usersController");
 
 const {
@@ -47,7 +47,7 @@ router.post("/renew", authenticateToken, renewToken);
 // ------------------------------------------------------------
 
 // GET /api/users/:id/lgas
-router.get("/:id/lgas", authenticateToken, requireAdmin, getUserLgaAccess);
+//router.get("/:id/lgas", authenticateToken, requireAdmin, getUserLgaAccess);
 
 // PUT /api/users/:id/lgas
 router.put("/:id/lgas", authenticateToken, requireAdmin, updateUserLgaAccess);
@@ -89,11 +89,11 @@ router.delete("/:id/password", authenticateToken, requireAdmin, clearUserPasswor
 
 // LGA access management
 // GET /api/users/:id/lgas
-router.get("/:id/lgas", authenticateToken, requireAdmin, getUserLgas);
+//router.get("/:id/lgas", authenticateToken, requireAdmin, getUserLgas);
 
 // PUT /api/users/:id/lgas
 // body: { scope: "all" | "restricted", lgas: string[] }
-router.put("/:id/lgas", authenticateToken, requireAdmin, putUserLgas);
+//router.put("/:id/lgas", authenticateToken, requireAdmin, putUserLgas);
 
 module.exports = router;
 
