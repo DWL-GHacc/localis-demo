@@ -16,11 +16,20 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
   };
 
   return (
-    <Navbar bg="dark" variant="dark" expand="lg" className="mb-3">
+    <Navbar bg="light" variant="light" expand="lg" className="mb-3">
       <Container>
-        <Navbar.Brand as={Link} to="/">
-          Localis Prototype
-        </Navbar.Brand>
+        <Navbar.Brand
+            as={Link}
+            to="/"
+            className="d-flex p-2"
+          >
+            <img
+              src="./images/localis-dih-blk.svg"
+              alt="Localis Destination Insight Hub logo"
+              width="300"
+              height="auto"
+            />
+          </Navbar.Brand>
 
         <Navbar.Toggle aria-controls="main-navbar-nav" />
         <Navbar.Collapse id="main-navbar-nav">
@@ -50,7 +59,7 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
             {!isLoggedIn && (
               <>
                 <Button
-                  variant="outline-light"
+                  variant="dark"
                   size="sm"
                   className="me-2"
                   onClick={onShowLogin}
@@ -59,7 +68,7 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
                 </Button>
 
                 <Button
-                  variant="light"
+                  variant="dark"
                   size="sm"
                   onClick={onShowRegister}
                 >
@@ -76,7 +85,7 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
                 </Navbar.Text>
 
                 <Button
-                  variant="outline-light"
+                  variant="dark"
                   size="sm"
                   onClick={handleLogoutClick}
                 >

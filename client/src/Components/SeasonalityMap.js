@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import { Card, Form, Spinner, Alert } from "react-bootstrap";
 import { Chart } from "react-google-charts";
 
+const API_BASE_URL = "https://localis-demo.onrender.com";
+
 export default function SeasonalityMap({ isAdmin }) {
   const [rows, setRows] = useState([]); // raw data from /spend_intensity
   const [loading, setLoading] = useState(false);
@@ -16,11 +18,25 @@ export default function SeasonalityMap({ isAdmin }) {
         setLoading(true);
         setError("");
 
-        const res = await fetch("/api/spend_data/spend_intensity");
+        const res = await fetch(
+          `${API_BASE_URL}/api/spend_data/spend_intensity`
+        );
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(
+            `Spend intensity request failed with status ${res.status}${
+              text ? `: ${text}` : ""
+            }`
+          );
+        }
+
         const json = await res.json();
 
         if (json.Error) {
-          throw new Error(json.Message || "Error loading spend intensity data");
+          throw new Error(
+            json.Message || "Error loading spend intensity data"
+          );
         }
 
         const data = json.Data || [];
@@ -46,7 +62,7 @@ export default function SeasonalityMap({ isAdmin }) {
         }
       } catch (err) {
         console.error("SeasonalityMap error:", err);
-        setError("Error loading seasonality data");
+        setError(err.message || "Error loading seasonality data");
       } finally {
         setLoading(false);
       }
@@ -54,7 +70,6 @@ export default function SeasonalityMap({ isAdmin }) {
 
     loadIntensity();
   }, []);
-
 
   const yearOptions = useMemo(() => {
     const years = Array.from(new Set(rows.map((r) => Number(r.year)))).sort(
@@ -73,7 +88,6 @@ export default function SeasonalityMap({ isAdmin }) {
     return uniqueMonths;
   }, [rows, selectedYear]);
 
-
   const filteredRows = useMemo(() => {
     if (!selectedYear || !selectedMonth) return [];
 
@@ -83,7 +97,6 @@ export default function SeasonalityMap({ isAdmin }) {
         String(r.month).padStart(2, "0") === String(selectedMonth)
     );
   }, [rows, selectedYear, selectedMonth]);
-
 
   const regionTotals = useMemo(() => {
     const totals = new Map();
@@ -99,10 +112,8 @@ export default function SeasonalityMap({ isAdmin }) {
       }
     });
 
-    return Array.from(totals.entries()) 
-      .sort((a, b) => b[1] - a[1]); 
+    return Array.from(totals.entries()).sort((a, b) => b[1] - a[1]);
   }, [filteredRows]);
-
 
   const chartData = useMemo(() => {
     const data = [["Region", "Total spend"]];
@@ -155,8 +166,15 @@ export default function SeasonalityMap({ isAdmin }) {
 
         {loading && (
           <div className="d-flex align-items-center mt-3">
-            <Spinner animation="border" role="status" size="sm" className="me-2" />
-            <span className="text-muted small">Loading seasonality data…</span>
+            <Spinner
+              animation="border"
+              role="status"
+              size="sm"
+              className="me-2"
+            />
+            <span className="text-muted small">
+              Loading seasonality data…
+            </span>
           </div>
         )}
 

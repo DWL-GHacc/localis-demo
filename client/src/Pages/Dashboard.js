@@ -51,7 +51,7 @@ export default function Dashboard() {
               <Card.Text className="text-muted mb-3">
                 Explore occupancy trends, length of stay and seasonal patterns.
               </Card.Text>
-              <Button as={Link} to="/accomodation-trends" className="btn-localis-primary">
+              <Button as={Link} to="/dashboard/compare-occupancy" className="btn-localis-primary">
                 Explore accommodation
               </Button>
             </Card.Body>
