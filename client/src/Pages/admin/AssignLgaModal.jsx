@@ -1,43 +1,36 @@
-// client/src/Pages/admin/AssignLgaModal.jsx
-import { useState, useEffect } from "react";
-import { Modal, Button, Form, Row, Col } from "react-bootstrap";
+import { useEffect, useMemo, useState } from "react";
+import { Modal, Button, Form } from "react-bootstrap";
 
-const AssignLgaModal = ({
-  show,
-  onHide,
-  user,
-  allLgas,
-  initialScope = "all",
-  initialLgas = [],
-  onSave,
-}) => {
-  const [scope, setScope] = useState(initialScope);
-  const [selectedLgas, setSelectedLgas] = useState(initialLgas);
+const AssignLgaModal = ({ show, onHide, user, allLgas, initialLgas = [], onSave }) => {
+  const [selected, setSelected] = useState([]);
 
   useEffect(() => {
-    setScope(initialScope);
-    setSelectedLgas(initialLgas);
-  }, [initialScope, initialLgas, user]);
+    setSelected(Array.isArray(initialLgas) ? initialLgas : []);
+  }, [initialLgas, user]);
 
-  const handleToggleLga = (name) => {
-    setSelectedLgas((prev) =>
-      prev.includes(name)
-        ? prev.filter((l) => l !== name)
-        : [...prev, name]
-    );
+  const allSorted = useMemo(() => (Array.isArray(allLgas) ? [...allLgas] : []), [allLgas]);
+
+  const selectedSet = useMemo(() => new Set(selected), [selected]);
+
+  const allChecked = allSorted.length > 0 && selected.length === allSorted.length;
+  const noneChecked = selected.length === 0;
+
+  const toggleOne = (lga) => {
+    setSelected((prev) => {
+      const s = new Set(prev);
+      if (s.has(lga)) s.delete(lga);
+      else s.add(lga);
+      return Array.from(s);
+    });
+  };
+
+  const toggleAll = () => {
+    setSelected((prev) => (prev.length === allSorted.length ? [] : allSorted));
   };
 
   const handleSave = () => {
-    if (scope === "restricted" && selectedLgas.length === 0) {
-      alert("Please select at least one LGA or choose 'All LGAs'.");
-      return;
-    }
-
-    onSave({
-      scope,
-      // ✅ send full list when "all" is selected
-      lgas: scope === "all" ? allLgas : selectedLgas,
-    });
+    // allow empty, but activation will be blocked until at least 1 is selected
+    onSave({ lgas: selected });
   };
 
   if (!user) return null;
@@ -45,82 +38,64 @@ const AssignLgaModal = ({
   return (
     <Modal show={show} onHide={onHide} size="lg" centered>
       <Modal.Header closeButton>
-        <Modal.Title>
-          Assign LGAs for {user.full_name || user.email}
-        </Modal.Title>
+        <Modal.Title>Assign LGAs for {user.full_name || user.email}</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
-        <Form>
-          <Form.Group as={Row} className="mb-3">
-            <Form.Label as="legend" column sm={3}>
-              Access type
-            </Form.Label>
-            <Col sm={9}>
-              <Form.Check
-                type="radio"
-                id="scope-all"
-                name="scope"
-                label="All LGAs (full access)"
-                checked={scope === "all"}
-                onChange={() => setScope("all")}
-                className="mb-2"
-              />
-              <Form.Check
-                type="radio"
-                id="scope-restricted"
-                name="scope"
-                label="Specific LGAs only"
-                checked={scope === "restricted"}
-                onChange={() => setScope("restricted")}
-              />
-            </Col>
-          </Form.Group>
+        <div className="d-flex align-items-center justify-content-between mb-2">
+          <div className="text-muted small">
+            Selected: <strong>{selected.length}</strong> / {allSorted.length}
+          </div>
 
-          {scope === "restricted" && (
-            <Form.Group>
-              <Form.Label>Select LGAs</Form.Label>
-              <div
-                style={{
-                  maxHeight: "300px",
-                  overflowY: "auto",
-                  border: "1px solid #dee2e6",
-                  borderRadius: "0.25rem",
-                  padding: "0.5rem 1rem",
-                }}
-              >
-                {allLgas.length === 0 && (
-                  <div className="text-muted small">
-                    No LGAs found in dataset.
-                  </div>
-                )}
-                {allLgas.map((lga) => (
-                  <Form.Check
-                    key={lga}
-                    type="checkbox"
-                    id={`lga-${lga}`}
-                    label={lga}
-                    checked={selectedLgas.includes(lga)}
-                    onChange={() => handleToggleLga(lga)}
-                    className="mb-1"
-                  />
-                ))}
-              </div>
-              <div className="mt-2 small text-muted">
-                Tip: you can assign multiple LGAs – this user will see
-                dashboards only for the selected areas.
-              </div>
-            </Form.Group>
+          <Button
+            variant={allChecked ? "outline-secondary" : "outline-primary"}
+            size="sm"
+            onClick={toggleAll}
+            disabled={allSorted.length === 0}
+          >
+            {allChecked ? "Clear all" : "Select all"}
+          </Button>
+        </div>
+
+        <div
+          style={{
+            maxHeight: "360px",
+            overflowY: "auto",
+            border: "1px solid #dee2e6",
+            borderRadius: "0.25rem",
+            padding: "0.75rem 1rem",
+          }}
+        >
+          {allSorted.length === 0 && (
+            <div className="text-muted small">No LGAs found in dataset.</div>
           )}
-        </Form>
+
+          {allSorted.map((lga) => (
+            <Form.Check
+              key={lga}
+              type="checkbox"
+              id={`lga-${lga}`}
+              label={lga}
+              checked={selectedSet.has(lga)}
+              onChange={() => toggleOne(lga)}
+              className="mb-1"
+            />
+          ))}
+        </div>
+
+        {noneChecked && (
+          <div className="mt-2 small text-warning">
+            No LGAs selected. This user cannot be activated until at least one LGA is assigned.
+          </div>
+        )}
       </Modal.Body>
 
       <Modal.Footer>
         <Button variant="secondary" onClick={onHide}>
           Cancel
         </Button>
-        <Button variant="primary" onClick={handleSave}>
-          Save LGA access
+        <Button variant="primary" onClick={handleSave} disabled={allSorted.length === 0}>
+          Update LGA access
         </Button>
       </Modal.Footer>
     </Modal>
