@@ -17,6 +17,8 @@ const {
   clearUserPassword,
   getUserLgaAccess,
   updateUserLgaAccess,
+  getUserLgas,
+  putUserLgas,
 } = require("../controllers/usersController");
 
 const {
@@ -84,6 +86,14 @@ router.delete("/:id/password", authenticateToken, clearUserPassword);
 // Manage user passwords (admin only from admin UI)
 router.patch("/:id/password", authenticateToken, requireAdmin, updateUserPassword);
 router.delete("/:id/password", authenticateToken, requireAdmin, clearUserPassword);
+
+// LGA access management
+// GET /api/users/:id/lgas
+router.get("/:id/lgas", authenticateToken, requireAdmin, getUserLgas);
+
+// PUT /api/users/:id/lgas
+// body: { scope: "all" | "restricted", lgas: string[] }
+router.put("/:id/lgas", authenticateToken, requireAdmin, putUserLgas);
 
 module.exports = router;
 

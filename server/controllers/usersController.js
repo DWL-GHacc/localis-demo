@@ -758,6 +758,152 @@ async function updateUserLgaAccess(req, res) {
     });
   }
 }
+// server/routes/controllers/usersController.js
+
+async function getAllAvailableLgas(db) {
+  const rows = await db("length_data")
+    .distinct("lga_name")
+    .whereNotNull("lga_name")
+    .orderBy("lga_name");
+
+  return rows.map((r) => r.lga_name).filter(Boolean);
+}
+
+// ✅ GET /api/users/:id/lgas
+async function getUserLgas(req, res) {
+  const db = req.db;
+  const userId = Number(req.params.id);
+
+  try {
+    const [available, assignedRows] = await Promise.all([
+      getAllAvailableLgas(db),
+      db("user_lga_access")
+        .select("lga_name")
+        .where({ user_id: userId })
+        .orderBy("lga_name"),
+    ]);
+
+    const assigned = assignedRows.map((r) => r.lga_name).filter(Boolean);
+
+    const scope =
+      available.length > 0 && assigned.length === available.length
+        ? "all"
+        : "restricted";
+
+    return res.json({
+      error: false,
+      scope,
+      lgas: assigned,
+      availableCount: available.length,
+      assignedCount: assigned.length,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      error: true,
+      message: "Failed to load user LGA access",
+    });
+  }
+}
+
+// ✅ PUT /api/users/:id/lgas
+async function putUserLgas(req, res) {
+  const db = req.db;
+  const userId = Number(req.params.id);
+  const { scope, lgas } = req.body || {};
+
+  try {
+    if (scope !== "all" && scope !== "restricted") {
+      return res.status(400).json({
+        error: true,
+        message: "scope must be 'all' or 'restricted'",
+      });
+    }
+
+    const available = await getAllAvailableLgas(db);
+
+    const toAssign =
+      scope === "all"
+        ? available
+        : (Array.isArray(lgas) ? lgas : []).filter(Boolean);
+
+    if (scope === "restricted" && toAssign.length === 0) {
+      return res.status(400).json({
+        error: true,
+        message: "Please select at least one LGA for restricted access",
+      });
+    }
+
+    // Validate requested LGAs actually exist in dataset
+    const availableSet = new Set(available);
+    const invalid = toAssign.filter((x) => !availableSet.has(x));
+    if (invalid.length > 0) {
+      return res.status(400).json({
+        error: true,
+        message: `Invalid LGA(s): ${invalid.slice(0, 5).join(", ")}${
+          invalid.length > 5 ? "…" : ""
+        }`,
+      });
+    }
+
+    // Replace all rows for the user in a transaction
+    await db.transaction(async (trx) => {
+      await trx("user_lga_access").where({ user_id: userId }).del();
+
+      // Insert one row per LGA
+      const unique = Array.from(new Set(toAssign));
+      if (unique.length > 0) {
+        await trx("user_lga_access").insert(
+          unique.map((name) => ({ user_id: userId, lga_name: name }))
+        );
+      }
+    });
+
+    return res.json({
+      error: false,
+      message: "User LGA access updated",
+      scope,
+      assignedCount: toAssign.length,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      error: true,
+      message: "Failed to update user LGA access",
+    });
+  }
+}
+
+// ✅ PATCH /api/users/:id/activate (modify your existing activateUser)
+async function activateUser(req, res) {
+  const db = req.db;
+  const userId = Number(req.params.id);
+
+  try {
+    const row = await db("user_lga_access")
+      .where({ user_id: userId })
+      .first();
+
+    if (!row) {
+      return res.status(409).json({
+        error: true,
+        code: "LGA_REQUIRED",
+        message:
+          "Cannot activate user until LGA access has been assigned (All or Specific LGAs).",
+      });
+    }
+
+    await db("users").where({ id: userId }).update({ is_active: 1 });
+
+    return res.json({ error: false, message: "User activated" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      error: true,
+      message: "Failed to activate user",
+    });
+  }
+}
 
 // ------------------------------------------------------------
 // EXPORTS
@@ -776,5 +922,8 @@ module.exports = {
   updateUserPassword,  
   clearUserPassword,  
   getUserLgaAccess,       
-  updateUserLgaAccess,    
+  updateUserLgaAccess, 
+  getUserLgas,
+  putUserLgas,
+  activateUser,   
 };

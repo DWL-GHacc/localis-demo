@@ -5,6 +5,8 @@ import EditUserModal from "./EditUserModal";
 import AssignLgaModal from "./AssignLgaModal";
 import { Table, Button, Modal, Form, Badge } from "react-bootstrap";
 
+const [pendingActivateUserId, setPendingActivateUserId] = useState(null);
+
 const UserAdmin = () => {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("active");
@@ -137,46 +139,79 @@ const UserAdmin = () => {
   };
 
   const saveLgaAccess = async ({ scope, lgas }) => {
-    if (!lgaUser) return;
+  if (!lgaUser) return;
 
-    const { response, data } = await authFetch(
-      `/api/users/${lgaUser.id}/lgas`,
-      {
-        method: "PUT",
-        body: JSON.stringify({ scope, lgas }),
-      }
-    );
+  const { response, data } = await authFetch(`/api/users/${lgaUser.id}/lgas`, {
+    method: "PUT",
+    body: JSON.stringify({ scope, lgas }),
+  });
 
-    if (!response.ok || data?.error) {
-      alert(data?.message || "Failed to update LGA access");
-      return;
-    }
+  if (!response.ok || data?.error) {
+    alert(data?.message || "Failed to update LGA access");
+    return;
+  }
 
-    setActionMessage("User LGA access updated");
-    setShowLgaModal(false);
-    setLgaUser(null);
-  };
+  setActionMessage("User LGA access updated");
+  setShowLgaModal(false);
+
+  const justUpdatedUserId = lgaUser.id;
+
+  setLgaUser(null);
+
+  // ✅ If we were trying to activate this user, do it now
+  if (pendingActivateUserId === justUpdatedUserId) {
+    setPendingActivateUserId(null);
+    await handleActivateDeactivate(justUpdatedUserId, true);
+  }
+};
+
 
   // -------------------------------------------------------------
   // ACTIVATE / DEACTIVATE
   // -------------------------------------------------------------
-  const handleActivateDeactivate = async (id, makeActive) => {
-    const endpoint = makeActive
-      ? `/api/users/${id}/activate`
-      : `/api/users/${id}/deactivate`;
+  const handleActivateDeactivate = async (userOrId, makeActive) => {
+  const id = typeof userOrId === "object" ? userOrId.id : userOrId;
+  const userObj = typeof userOrId === "object" ? userOrId : null;
 
-    const { response, data } = await authFetch(endpoint, {
-      method: "PATCH",
-    });
+  if (makeActive) {
+    // 1) Check current LGA access
+    const check = await authFetch(`/api/users/${id}/lgas`);
+    const assignedCount = check?.data?.assignedCount ?? (check?.data?.lgas?.length ?? 0);
 
-    if (!response.ok || data?.error) {
-      setActionMessage(data?.message || "Failed to update user state");
+    if (!check.response.ok || check.data?.error || assignedCount === 0) {
+      // 2) Force admin to assign LGAs first
+      setPendingActivateUserId(id);
+      if (userObj) {
+        openLgaModal(userObj);
+      } else {
+        setActionMessage("Please assign LGAs before activating this user.");
+      }
+      return;
+    }
+  }
+
+  const endpoint = makeActive
+    ? `/api/users/${id}/activate`
+    : `/api/users/${id}/deactivate`;
+
+  const { response, data } = await authFetch(endpoint, { method: "PATCH" });
+
+  if (!response.ok || data?.error) {
+    // If backend blocks activation, also open modal
+    if (makeActive && data?.code === "LGA_REQUIRED" && userObj) {
+      setPendingActivateUserId(id);
+      openLgaModal(userObj);
       return;
     }
 
-    setActionMessage(`User ${makeActive ? "activated" : "deactivated"}`);
-    loadUsers();
-  };
+    setActionMessage(data?.message || "Failed to update user state");
+    return;
+  }
+
+  setActionMessage(`User ${makeActive ? "activated" : "deactivated"}`);
+  loadUsers();
+};
+
 
   // -------------------------------------------------------------
   // DELETE USER
@@ -387,7 +422,7 @@ const UserAdmin = () => {
                       size="sm"
                       variant="success"
                       onClick={() =>
-                        handleActivateDeactivate(u.id, true)
+                        handleActivateDeactivate(u, true)
                       }
                     >
                       Activate
