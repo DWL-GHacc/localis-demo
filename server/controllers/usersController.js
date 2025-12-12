@@ -958,7 +958,5 @@ module.exports = {
   clearUserPassword,  
   getUserLgaAccess,       
   updateUserLgaAccess, 
-  getUserLgas,
-  putUserLgas,
-  activateUser,   
+ 
 };
