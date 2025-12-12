@@ -5,7 +5,7 @@ import EditUserModal from "./EditUserModal";
 import AssignLgaModal from "./AssignLgaModal";
 import { Table, Button, Modal, Form, Badge } from "react-bootstrap";
 
-const [pendingActivateUserId, setPendingActivateUserId] = useState(null);
+
 
 const UserAdmin = () => {
   const [users, setUsers] = useState([]);
@@ -13,7 +13,7 @@ const UserAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
-
+  const [pendingActivateUserId, setPendingActivateUserId] = useState(null);
   // EDIT MODAL
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
