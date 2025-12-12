@@ -35,7 +35,8 @@ const AssignLgaModal = ({
 
     onSave({
       scope,
-      lgas: scope === "all" ? [] : selectedLgas,
+      // ✅ send full list when "all" is selected
+      lgas: scope === "all" ? allLgas : selectedLgas,
     });
   };
 

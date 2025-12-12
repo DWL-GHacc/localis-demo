@@ -685,7 +685,7 @@ async function getUserLgaAccess(req, res) {
 // ------------------------------------------------------------
 async function updateUserLgaAccess(req, res) {
   const userId = parseInt(req.params.id, 10);
-  const { scope, lgas } = req.body;
+  const { scope, lgas } = req.body || {};
 
   if (isNaN(userId)) {
     return res.status(400).json({
@@ -694,20 +694,11 @@ async function updateUserLgaAccess(req, res) {
     });
   }
 
-  if (!scope || !["all", "restricted"].includes(scope)) {
+  if (!["all", "restricted"].includes(scope)) {
     return res.status(400).json({
       error: true,
       message: "scope must be 'all' or 'restricted'",
     });
-  }
-
-  if (scope === "restricted") {
-    if (!Array.isArray(lgas) || lgas.length === 0) {
-      return res.status(400).json({
-        error: true,
-        message: "When scope is 'restricted', lgas must be a non-empty array",
-      });
-    }
   }
 
   try {
@@ -723,32 +714,85 @@ async function updateUserLgaAccess(req, res) {
       });
     }
 
+    // ---------------------------------------------
+    // Fetch ALL available LGAs from dataset
+    // ---------------------------------------------
+    const availableRows = await knex("length_data")
+      .distinct("lga_name")
+      .whereNotNull("lga_name")
+      .orderBy("lga_name");
+
+    const allLgas = availableRows
+      .map((r) => r.lga_name)
+      .filter(Boolean);
+
+    if (allLgas.length === 0) {
+      return res.status(400).json({
+        error: true,
+        message: "No LGAs available in dataset",
+      });
+    }
+
+    // ---------------------------------------------
+    // Determine which LGAs to assign
+    // ---------------------------------------------
+    let lgasToAssign = [];
+
+    if (scope === "all") {
+      // ✅ FIX: assign EVERY available LGA
+      lgasToAssign = allLgas;
+    } else {
+      // restricted
+      if (!Array.isArray(lgas) || lgas.length === 0) {
+        return res.status(400).json({
+          error: true,
+          message:
+            "When scope is 'restricted', lgas must be a non-empty array",
+        });
+      }
+
+      // Ensure LGAs are valid
+      const validSet = new Set(allLgas);
+      lgasToAssign = [...new Set(lgas)].filter(
+        (name) => validSet.has(name)
+      );
+
+      if (lgasToAssign.length === 0) {
+        return res.status(400).json({
+          error: true,
+          message: "No valid LGAs supplied",
+        });
+      }
+    }
+
+    // ---------------------------------------------
+    // Transaction: update scope + replace mappings
+    // ---------------------------------------------
     await knex.transaction(async (trx) => {
       // Update scope on users table
-      await trx("users").where({ id: userId }).update({ lga_scope: scope });
+      await trx("users")
+        .where({ id: userId })
+        .update({ lga_scope: scope });
 
       // Clear existing mappings
-      await trx("user_lga_access").where({ user_id: userId }).del();
+      await trx("user_lga_access")
+        .where({ user_id: userId })
+        .del();
 
-      if (scope === "restricted") {
-        const distinctLgas = [...new Set(lgas)].filter(Boolean);
-
-        const rowsToInsert = distinctLgas.map((name) => ({
+      // Insert new mappings (one row per LGA)
+      await trx("user_lga_access").insert(
+        lgasToAssign.map((lga) => ({
           user_id: userId,
-          lga_name: name,
-        }));
-
-        if (rowsToInsert.length > 0) {
-          await trx("user_lga_access").insert(rowsToInsert);
-        }
-      }
+          lga_name: lga,
+        }))
+      );
     });
 
     return res.json({
       error: false,
       message: "User LGA access updated successfully",
       scope,
-      lgas: scope === "restricted" ? lgas : [],
+      assignedCount: lgasToAssign.length,
     });
   } catch (err) {
     console.error("Error updating user LGA access:", err);
@@ -758,16 +802,7 @@ async function updateUserLgaAccess(req, res) {
     });
   }
 }
-// server/routes/controllers/usersController.js
 
-async function getAllAvailableLgas(db) {
-  const rows = await db("length_data")
-    .distinct("lga_name")
-    .whereNotNull("lga_name")
-    .orderBy("lga_name");
-
-  return rows.map((r) => r.lga_name).filter(Boolean);
-}
 
 // ✅ GET /api/users/:id/lgas
 async function getUserLgas(req, res) {
