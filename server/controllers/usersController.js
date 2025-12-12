@@ -644,29 +644,43 @@ async function getUserLgaAccess(req, res) {
       });
     }
 
-    // Default if column not populated for some older rows
     const scope = user.lga_scope || "all";
 
+    // Get available LGAs from dataset
+    const availableRows = await knex("length_data")
+      .distinct("lga_name")
+      .whereNotNull("lga_name")
+      .orderBy("lga_name");
+
+    const allLgas = availableRows.map((r) => r.lga_name).filter(Boolean);
+
+    const availableCount = allLgas.length;
+
     if (scope === "all") {
-      // No need to read the mapping table
+      // ✅ IMPORTANT: make frontend see that access is assigned
       return res.json({
         error: false,
         scope: "all",
-        lgas: [],
+        lgas: allLgas,             // <-- return full list (or could keep [] but then must set assignedCount)
+        availableCount,
+        assignedCount: availableCount,
       });
     }
 
+    // restricted: read mappings
     const rows = await knex("user_lga_access")
       .select("lga_name")
       .where({ user_id: userId })
       .orderBy("lga_name", "asc");
 
-    const lgas = rows.map((r) => r.lga_name);
+    const lgas = rows.map((r) => r.lga_name).filter(Boolean);
 
     return res.json({
       error: false,
       scope: "restricted",
       lgas,
+      availableCount,
+      assignedCount: lgas.length,
     });
   } catch (err) {
     console.error("Error getting user LGA access:", err);
@@ -676,6 +690,7 @@ async function getUserLgaAccess(req, res) {
     });
   }
 }
+
 
 // ------------------------------------------------------------
 // UPDATE USER LGA ACCESS

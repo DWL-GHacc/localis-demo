@@ -5,15 +5,16 @@ import EditUserModal from "./EditUserModal";
 import AssignLgaModal from "./AssignLgaModal";
 import { Table, Button, Modal, Form, Badge } from "react-bootstrap";
 
-
-
 const UserAdmin = () => {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("active");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
+
+  // If admin clicked Activate and we forced LGA modal first
   const [pendingActivateUserId, setPendingActivateUserId] = useState(null);
+
   // EDIT MODAL
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -44,7 +45,7 @@ const UserAdmin = () => {
     u.is_active === 1 || u.is_active === true || u.is_active === "1";
 
   // -------------------------------------------------------------
-  // LOAD USERS (your original working version — preserved)
+  // LOAD USERS
   // -------------------------------------------------------------
   const loadUsers = useCallback(async () => {
     try {
@@ -57,7 +58,6 @@ const UserAdmin = () => {
 
       let finalList = [];
 
-      // ACTIVE
       if (filter === "active" || filter === "all") {
         const { response, data } = await authFetch("/api/users/active");
         if (!response.ok || data?.error) {
@@ -66,7 +66,6 @@ const UserAdmin = () => {
         finalList = finalList.concat(extractUsers(data));
       }
 
-      // PENDING
       if (filter === "pending" || filter === "all") {
         const { response, data } = await authFetch("/api/users/pending");
         if (!response.ok || data?.error) {
@@ -110,6 +109,7 @@ const UserAdmin = () => {
 
         setAllLgas(list);
       } catch (err) {
+        console.error(err);
         setLgaError("Unable to load LGA list");
       } finally {
         setLgaLoading(false);
@@ -120,6 +120,27 @@ const UserAdmin = () => {
   }, []);
 
   // -------------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------------
+  const hasAnyLgaAccess = (data) => {
+    if (!data || data.error) return false;
+
+    // ✅ key fix: scope=all means valid, even if lgas=[]
+    if (data.scope === "all") return true;
+
+    if (typeof data.assignedCount === "number") return data.assignedCount > 0;
+
+    if (Array.isArray(data.lgas)) return data.lgas.length > 0;
+
+    return false;
+  };
+
+  const fetchUserLgaAccess = async (id) => {
+    const { response, data } = await authFetch(`/api/users/${id}/lgas`);
+    return { response, data };
+  };
+
+  // -------------------------------------------------------------
   // LGA ACCESS HANDLERS
   // -------------------------------------------------------------
   const openLgaModal = async (user) => {
@@ -127,91 +148,98 @@ const UserAdmin = () => {
     setUserLgas([]);
     setLgaScope("all");
 
-    // fetch user scope / assigned LGAs
-    const { response, data } = await authFetch(`/api/users/${user.id}/lgas`);
+    const { response, data } = await fetchUserLgaAccess(user.id);
 
-    if (response.ok && !data.error) {
+    if (response.ok && !data?.error) {
       setLgaScope(data.scope || "all");
-      setUserLgas(data.lgas || []);
+      setUserLgas(Array.isArray(data.lgas) ? data.lgas : []);
     }
 
     setShowLgaModal(true);
   };
 
   const saveLgaAccess = async ({ scope, lgas }) => {
-  if (!lgaUser) return;
+    if (!lgaUser) return;
 
-  const { response, data } = await authFetch(`/api/users/${lgaUser.id}/lgas`, {
-    method: "PUT",
-    body: JSON.stringify({ scope, lgas }),
-  });
+    const { response, data } = await authFetch(`/api/users/${lgaUser.id}/lgas`, {
+      method: "PUT",
+      body: JSON.stringify({ scope, lgas }),
+    });
 
-  if (!response.ok || data?.error) {
-    alert(data?.message || "Failed to update LGA access");
-    return;
-  }
+    if (!response.ok || data?.error) {
+      alert(data?.message || "Failed to update LGA access");
+      return;
+    }
 
-  setActionMessage("User LGA access updated");
-  setShowLgaModal(false);
+    setActionMessage("User LGA access updated");
+    setShowLgaModal(false);
 
-  const justUpdatedUserId = lgaUser.id;
+    const justUpdatedUserId = lgaUser.id;
+    setLgaUser(null);
 
-  setLgaUser(null);
+    // ✅ If we were trying to activate, re-check the server state first, then activate.
+    if (pendingActivateUserId === justUpdatedUserId) {
+      setPendingActivateUserId(null);
 
-  // ✅ If we were trying to activate this user, do it now
-  if (pendingActivateUserId === justUpdatedUserId) {
-    setPendingActivateUserId(null);
-    await handleActivateDeactivate(justUpdatedUserId, true);
-  }
-};
+      const check = await fetchUserLgaAccess(justUpdatedUserId);
+      if (!check.response.ok || !hasAnyLgaAccess(check.data)) {
+        setActionMessage(
+          "LGA access was not saved correctly. Please try again."
+        );
+        return;
+      }
 
+      await handleActivateDeactivate(justUpdatedUserId, true);
+    }
+  };
 
   // -------------------------------------------------------------
   // ACTIVATE / DEACTIVATE
   // -------------------------------------------------------------
   const handleActivateDeactivate = async (userOrId, makeActive) => {
-  const id = typeof userOrId === "object" ? userOrId.id : userOrId;
-  const userObj = typeof userOrId === "object" ? userOrId : null;
+    const id = typeof userOrId === "object" ? userOrId.id : userOrId;
+    const userObj = typeof userOrId === "object" ? userOrId : null;
 
-  if (makeActive) {
-    // 1) Check current LGA access
-    const check = await authFetch(`/api/users/${id}/lgas`);
-    const assignedCount = check?.data?.assignedCount ?? (check?.data?.lgas?.length ?? 0);
+    if (makeActive) {
+      // 1) Check current LGA access
+      const check = await fetchUserLgaAccess(id);
 
-    if (!check.response.ok || check.data?.error || assignedCount === 0) {
-      // 2) Force admin to assign LGAs first
-      setPendingActivateUserId(id);
-      if (userObj) {
-        openLgaModal(userObj);
-      } else {
-        setActionMessage("Please assign LGAs before activating this user.");
+      if (!check.response.ok || check.data?.error || !hasAnyLgaAccess(check.data)) {
+        // 2) Force admin to assign LGAs first
+        setPendingActivateUserId(id);
+
+        if (userObj) {
+          await openLgaModal(userObj);
+        } else {
+          setActionMessage(
+            "Please assign LGAs before activating this user."
+          );
+        }
+        return;
       }
-      return;
-    }
-  }
-
-  const endpoint = makeActive
-    ? `/api/users/${id}/activate`
-    : `/api/users/${id}/deactivate`;
-
-  const { response, data } = await authFetch(endpoint, { method: "PATCH" });
-
-  if (!response.ok || data?.error) {
-    // If backend blocks activation, also open modal
-    if (makeActive && data?.code === "LGA_REQUIRED" && userObj) {
-      setPendingActivateUserId(id);
-      openLgaModal(userObj);
-      return;
     }
 
-    setActionMessage(data?.message || "Failed to update user state");
-    return;
-  }
+    const endpoint = makeActive
+      ? `/api/users/${id}/activate`
+      : `/api/users/${id}/deactivate`;
 
-  setActionMessage(`User ${makeActive ? "activated" : "deactivated"}`);
-  loadUsers();
-};
+    const { response, data } = await authFetch(endpoint, { method: "PATCH" });
 
+    if (!response.ok || data?.error) {
+      // If backend blocks activation, also open modal
+      if (makeActive && data?.code === "LGA_REQUIRED" && userObj) {
+        setPendingActivateUserId(id);
+        await openLgaModal(userObj);
+        return;
+      }
+
+      setActionMessage(data?.message || "Failed to update user state");
+      return;
+    }
+
+    setActionMessage(`User ${makeActive ? "activated" : "deactivated"}`);
+    loadUsers();
+  };
 
   // -------------------------------------------------------------
   // DELETE USER
@@ -320,27 +348,21 @@ const UserAdmin = () => {
       {/* FILTER BUTTONS */}
       <div className="btn-group mb-3">
         <button
-          className={`btn btn-outline-primary ${
-            filter === "active" ? "active" : ""
-          }`}
+          className={`btn btn-outline-primary ${filter === "active" ? "active" : ""}`}
           onClick={() => setFilter("active")}
         >
           Active
         </button>
 
         <button
-          className={`btn btn-outline-primary ${
-            filter === "pending" ? "active" : ""
-          }`}
+          className={`btn btn-outline-primary ${filter === "pending" ? "active" : ""}`}
           onClick={() => setFilter("pending")}
         >
           Pending
         </button>
 
         <button
-          className={`btn btn-outline-primary ${
-            filter === "all" ? "active" : ""
-          }`}
+          className={`btn btn-outline-primary ${filter === "all" ? "active" : ""}`}
           onClick={() => setFilter("all")}
         >
           All
@@ -350,6 +372,7 @@ const UserAdmin = () => {
       {loading && <p>Loading users…</p>}
       {error && <div className="alert alert-danger">{error}</div>}
       {actionMessage && <div className="alert alert-info">{actionMessage}</div>}
+      {lgaError && <div className="alert alert-warning">{lgaError}</div>}
 
       {!loading && !error && users.length > 0 && (
         <Table striped bordered hover size="sm">
@@ -377,7 +400,6 @@ const UserAdmin = () => {
                 </td>
 
                 <td className="d-flex gap-2 flex-wrap">
-
                   {/* EDIT */}
                   <Button
                     size="sm"
@@ -411,9 +433,7 @@ const UserAdmin = () => {
                     <Button
                       size="sm"
                       variant="warning"
-                      onClick={() =>
-                        handleActivateDeactivate(u.id, false)
-                      }
+                      onClick={() => handleActivateDeactivate(u.id, false)}
                     >
                       Deactivate
                     </Button>
@@ -421,9 +441,7 @@ const UserAdmin = () => {
                     <Button
                       size="sm"
                       variant="success"
-                      onClick={() =>
-                        handleActivateDeactivate(u, true)
-                      }
+                      onClick={() => handleActivateDeactivate(u, true)}
                     >
                       Activate
                     </Button>
@@ -437,7 +455,6 @@ const UserAdmin = () => {
                   >
                     Delete
                   </Button>
-
                 </td>
               </tr>
             ))}
@@ -445,14 +462,10 @@ const UserAdmin = () => {
         </Table>
       )}
 
-      {/* ----------------------------------- */}
-      {/*       PASSWORD RESET MODAL          */}
-      {/* ----------------------------------- */}
+      {/* PASSWORD RESET MODAL */}
       <Modal show={showPwModal} onHide={() => setShowPwModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>
-            Reset Password {pwUser && `(${pwUser.email})`}
-          </Modal.Title>
+          <Modal.Title>Reset Password {pwUser && `(${pwUser.email})`}</Modal.Title>
         </Modal.Header>
 
         <Form onSubmit={handlePasswordReset}>
@@ -477,16 +490,11 @@ const UserAdmin = () => {
               />
             </Form.Group>
 
-            {pwError && (
-              <div className="text-danger small mt-2">{pwError}</div>
-            )}
+            {pwError && <div className="text-danger small mt-2">{pwError}</div>}
           </Modal.Body>
 
           <Modal.Footer>
-            <Button
-              variant="secondary"
-              onClick={() => setShowPwModal(false)}
-            >
+            <Button variant="secondary" onClick={() => setShowPwModal(false)}>
               Cancel
             </Button>
 
@@ -497,9 +505,7 @@ const UserAdmin = () => {
         </Form>
       </Modal>
 
-      {/* ----------------------------------- */}
-      {/*       EDIT USER MODAL               */}
-      {/* ----------------------------------- */}
+      {/* EDIT USER MODAL */}
       <EditUserModal
         show={showEditModal}
         onHide={() => setShowEditModal(false)}
@@ -509,9 +515,7 @@ const UserAdmin = () => {
         onSubmit={handleUpdateUser}
       />
 
-      {/* ----------------------------------- */}
-      {/*       LGA ACCESS MODAL              */}
-      {/* ----------------------------------- */}
+      {/* LGA ACCESS MODAL */}
       <AssignLgaModal
         show={showLgaModal}
         onHide={() => setShowLgaModal(false)}
