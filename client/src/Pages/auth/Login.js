@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Button, Alert, Modal } from "react-bootstrap";
-import { authFetch } from "../../api/authClient"; // adjust if your folder is /API not /api
+import { authFetch } from "../../API/authClient"; 
 
 export default function Login({ setIsLoggedIn, onSuccess }) {
   const navigate = useNavigate();
