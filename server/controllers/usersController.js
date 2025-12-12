@@ -119,25 +119,26 @@ async function loginUser(req, res) {
 
       lgaAccess = rows.map((r) => r.lga_name);
     } else {
-      // all (or null default)
+      // "all" (or null default)
       lgaAccess = "all";
     }
 
+    // ✅ Generate token WITHOUT email
     const token = generateToken({
       id: user.id,
-      email: user.email,
       role: user.role,
       lga_scope: user.lga_scope,
     });
 
-    const { password_hash, ...safeUser } = user;
+    // ✅ Remove password_hash AND email from returned user object
+    const { password_hash, email: _email, ...safeUser } = user;
 
     return res.status(200).json({
       error: false,
       message: "Login successful",
       token,
       user: {
-        ...safeUser,
+        ...safeUser, // ✅ no email here now
         lgaAccess,
       },
     });
@@ -149,6 +150,7 @@ async function loginUser(req, res) {
     });
   }
 }
+
 
 // ------------------------------------------------------------
 // RENEW TOKEN

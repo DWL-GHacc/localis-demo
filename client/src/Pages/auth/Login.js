@@ -51,7 +51,7 @@ export default function Login({ setIsLoggedIn, onSuccess }) {
 
       if (data?.user?.role) localStorage.setItem("role", data.user.role);
       if (data?.user?.full_name) localStorage.setItem("userName", data.user.full_name);
-      if (data?.user?.email) localStorage.setItem("userEmail", data.user.email);
+      //if (data?.user?.email) localStorage.setItem("userEmail", data.user.email);
 
       // Optional: store LGA access if you use it client-side
       if (data?.user?.lgaAccess !== undefined) {
