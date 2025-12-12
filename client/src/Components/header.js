@@ -24,7 +24,7 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
             className="d-flex p-2"
           >
             <img
-              src="./images/localis-dih-blk.svg"
+              src="/images/localis-dih-blk.svg"
               alt="Localis Destination Insight Hub logo"
               width="300"
               height="auto"
