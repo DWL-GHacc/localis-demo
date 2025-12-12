@@ -116,18 +116,10 @@ if (user.lga_scope === "restricted") {
         .where({ user_id: user.id });
 lgaAccess = rows.map((r) => r.lga_name);
     } else {
-      // Default: user can see ALL LGAs
-      // You can either:
-      //   a) just send the string "all" and let the frontend interpret it, OR
-      //   b) actually send a full list of LGAs from another table.
-      //
-      // Option (a) – simple flag:
+      
       lgaAccess = "all";
 
-// If you later want option (b) instead:
-      // const allLgas = await knex("some_lga_source_table")
-      //   .distinct("lga_name");
-      // lgaAccess = allLgas.map(r => r.lga_name);
+
     }
 // Build token payload (include lga_scope if you want it in the JWT)
     const token = generateToken({

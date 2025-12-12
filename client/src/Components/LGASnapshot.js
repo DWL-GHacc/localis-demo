@@ -2,71 +2,106 @@ import { useState, useEffect } from "react";
 import { Card, Form, Spinner, Alert, Row, Col } from "react-bootstrap";
 import RegionMapBanner from "./RegionMapBanner";
 
+const API_BASE_URL = "https://localis-demo.onrender.com";
 
 export default function LGASnapshot({ isAdmin, defaultRegion }) {
+  const [regions, setRegions] = useState([]); // fetch /spend_data/distinct_lgas_spend
+  const [selectedRegion, setSelectedRegion] = useState(defaultRegion || "");
 
-    const [regions, setRegions] = useState([]);  //fetch /spend/distinct_lgas_spend
-    const [selectedRegion, setSelectedRegion] = useState(defaultRegion || ""); //TBC
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [snapshotData, setSnapshotData] = useState(null);
+  const [year, setYear] = useState("all");
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [snapshotData, setSnapshotData] = useState(null); //Placeholder
-    const [year, setYear] = useState("all");
+  // ---- Load regions ----
+  useEffect(() => {
+    async function fetchRegions() {
+      try {
+        setError("");
 
-    useEffect (() => {
-        async function fetchRegions() {
-            try {
-                setError("");
+        const response = await fetch(
+          `${API_BASE_URL}/api/spend_data/distinct_lgas_spend`
+        );
 
-                const response = await fetch ("/api/spend_data/distinct_lgas_spend");
-                const json = await response.json();
-
-                if(json.Error) {
-                    throw new Error(json.Message || "Error fetching regions");
-                }
-
-                const regionNames = json.Data.map((row) => row.region).filter(Boolean);
-                setRegions(regionNames);
-                if(!selectedRegion && regionNames.length > 0 ) {
-                    setSelectedRegion(regionNames[0]);
-                }
-            } catch (err) {
-                console.error(err);
-                setError("Could not load regions. Please try again later.");
-            }
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          throw new Error(
+            `Regions request failed with status ${response.status}${
+              errorText ? `: ${errorText}` : ""
+            }`
+          );
         }
-        fetchRegions();
-    }, [])
 
-    useEffect(() => {
-        if(!selectedRegion) return;
+        const json = await response.json();
 
-        async function fetchSnapshot() {
-            try {
-                setLoading(true);
-                setError("");
-                
-                const response = await fetch(`/api/snapshot?region=${encodeURIComponent(selectedRegion)}&year=${encodeURIComponent(year)}`
-            );
+        if (json.Error) {
+          throw new Error(json.Message || "Error fetching regions");
+        }
 
-            const json = await response.json();
-            if(json.Error) {
-                throw new Error(json.Message || "Error fetching snapshot data");
-            }
-            setSnapshotData(json.Data || null )
+        const regionNames = json.Data.map((row) => row.region).filter(Boolean);
+        setRegions(regionNames);
 
-            } catch (err) {
+        if (!selectedRegion && regionNames.length > 0) {
+          setSelectedRegion(regionNames[0]);
+        }
+      } catch (err) {
         console.error(err);
-        setError("Could not load snapshot data. Please try again later.");
+        setError(
+          err.message || "Could not load regions. Please try again later."
+        );
+      }
+    }
+
+    fetchRegions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount
+
+  // ---- Load snapshot data when region/year change ----
+  useEffect(() => {
+    if (!selectedRegion) return;
+
+    async function fetchSnapshot() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/snapshot?region=${encodeURIComponent(
+            selectedRegion
+          )}&year=${encodeURIComponent(year)}`
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          throw new Error(
+            `Snapshot request failed with status ${response.status}${
+              errorText ? `: ${errorText}` : ""
+            }`
+          );
+        }
+
+        const json = await response.json();
+
+        if (json.Error) {
+          throw new Error(json.Message || "Error fetching snapshot data");
+        }
+
+        setSnapshotData(json.Data || null);
+      } catch (err) {
+        console.error(err);
+        setError(
+          err.message || "Could not load snapshot data. Please try again later."
+        );
         setSnapshotData(null);
       } finally {
         setLoading(false);
       }
-        }
-        fetchSnapshot();
-    }, [selectedRegion, year]);
+    }
 
-    return (
+    fetchSnapshot();
+  }, [selectedRegion, year]);
+
+  return (
     <Card className="mb-4 shadow-sm border-0 lga-snapshot-card">
       <Card.Body>
         {/* Header */}
@@ -77,8 +112,11 @@ export default function LGASnapshot({ isAdmin, defaultRegion }) {
               <Card.Title className="h5 mb-1">Region Snapshot</Card.Title>
             </div>
             <Card.Subtitle className="text-muted small">
-              {selectedRegion ? `Snapshot for ${selectedRegion} (${year === "all" ? "all available years" : year })`
-              : isAdmin
+              {selectedRegion
+                ? `Snapshot for ${selectedRegion} (${
+                    year === "all" ? "all available years" : year
+                  })`
+                : isAdmin
                 ? "Select any LGA to see a quick overview of visitor spend and activity."
                 : "A quick overview of your destination's Lifetime data at a glance."}
             </Card.Subtitle>
@@ -101,14 +139,14 @@ export default function LGASnapshot({ isAdmin, defaultRegion }) {
             </Form.Select>
 
             <Form.Select
-                style={{ maxWidth: "200px" }}
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-              >
-                <option value="all">All Years</option>
-                <option value="2023">2023</option>
-                <option value="2024">2024</option>
-              </Form.Select>
+              style={{ maxWidth: "200px" }}
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+            >
+              <option value="all">All Years</option>
+              <option value="2023">2023</option>
+              <option value="2024">2024</option>
+            </Form.Select>
           </div>
         </div>
 
@@ -134,8 +172,9 @@ export default function LGASnapshot({ isAdmin, defaultRegion }) {
           </p>
         )}
 
-
+        {/* Map banner */}
         <RegionMapBanner region={selectedRegion} />
+
         {/* Snapshot content */}
         {!loading && !error && snapshotData && (
           <div className="mt-2">
@@ -144,12 +183,11 @@ export default function LGASnapshot({ isAdmin, defaultRegion }) {
               <p className="snapshot-section-title mb-4">
                 Visitor spend overview
               </p>
-              <div style={{ maxWidth: "600px", margin:"0 auto"}}>
+              <div style={{ maxWidth: "600px", margin: "0 auto" }}>
                 <Row xs={1} sm={2} lg={4} className="g-3">
-                  {/* your KPI cards */}
+                  {/* KPI cards placeholder */}
                 </Row>
-                
-                </div>
+              </div>
               <Row xs={1} sm={2} lg={4} className="g-3">
                 <Col>
                   <div className="snapshot-stat">
@@ -173,7 +211,8 @@ export default function LGASnapshot({ isAdmin, defaultRegion }) {
                   <div className="snapshot-stat">
                     <p className="snapshot-stat-label">Spend per transaction</p>
                     <p className="snapshot-stat-value">
-                      ${snapshotData.spend.avgSpendPerTransaction.toFixed(2)}
+                      $
+                      {snapshotData.spend.avgSpendPerTransaction.toFixed(2)}
                     </p>
                   </div>
                 </Col>
@@ -212,9 +251,9 @@ export default function LGASnapshot({ isAdmin, defaultRegion }) {
                     <div className="snapshot-stat">
                       <p className="snapshot-stat-label">Occupancy rate</p>
                       <p className="snapshot-stat-value">
-                        {(snapshotData.occupancy.occupancyRate * 100).toFixed(
-                          1
-                        )}
+                        {(
+                          snapshotData.occupancy.occupancyRate * 100
+                        ).toFixed(1)}
                         %
                       </p>
                     </div>

@@ -96,6 +96,7 @@ function App() {
             <Route element={<PrivateRoutes />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/spend" element={<Spend />} />
+              <Route path="/dashboard/compare-occupancy" element={<CompareOccupancy />} />
 
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/users" element={<UserAdmin />} />
@@ -106,10 +107,7 @@ function App() {
               path="*"
               element={<div className="text-muted p-4">Page not Found</div>}
             />
-            <Route
-              path="/compare-occupancy"
-              element={<CompareOccupancy />}
-            ></Route>
+            
             <Route path="/api_test" element={<ApiTest />}></Route>
           </Routes>
         </Container>
