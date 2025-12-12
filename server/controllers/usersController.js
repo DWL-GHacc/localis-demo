@@ -20,7 +20,6 @@ async function registerUser(req, res) {
   }
 
   try {
-    // Check if user already exists
     const existing = await knex("users").where({ email }).first();
     if (existing) {
       return res.status(409).json({
@@ -36,7 +35,8 @@ async function registerUser(req, res) {
       password_hash,
       full_name: full_name || null,
       role: "user",
-      is_active: 0, // must be activated by admin
+      is_active: 0,
+      // lga_scope: null,  // optional if column exists
     });
 
     return res.status(201).json({
@@ -66,14 +66,15 @@ async function registerUser(req, res) {
 // ------------------------------------------------------------
 async function loginUser(req, res) {
   const { email, password } = req.body;
-if (!email || !password) {
+
+  if (!email || !password) {
     return res.status(400).json({
       error: true,
       message: "Email and password are required",
     });
   }
-try {
-    // Make sure lga_scope is in your users table
+
+  try {
     const user = await knex("users")
       .select(
         "id",
@@ -82,62 +83,62 @@ try {
         "full_name",
         "role",
         "is_active",
-        "lga_scope"          // <- NEW
+        "lga_scope"
       )
       .where({ email })
       .first();
-if (!user) {
+
+    if (!user) {
       return res.status(401).json({
         error: true,
         message: "Incorrect email or password",
       });
     }
-if (!user.is_active) {
+
+    if (!user.is_active) {
       return res.status(403).json({
         error: true,
         message: "Your account is not yet activated by an administrator",
       });
     }
-const match = await bcrypt.compare(password, user.password_hash);
+
+    const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
       return res.status(401).json({
         error: true,
         message: "Incorrect email or password",
       });
     }
-// --------------------------------------------------------
+
     // Fetch LGA access for this user
-    // --------------------------------------------------------
     let lgaAccess;
-if (user.lga_scope === "restricted") {
-      // Only specific LGAs for this user
+    if (user.lga_scope === "restricted") {
       const rows = await knex("user_lga_access")
-        .select("lga_name")          // or "lga_code"/whatever your column is
+        .select("lga_name")
         .where({ user_id: user.id });
-lgaAccess = rows.map((r) => r.lga_name);
+
+      lgaAccess = rows.map((r) => r.lga_name);
     } else {
-      
+      // all (or null default)
       lgaAccess = "all";
-
-
     }
-// Build token payload (include lga_scope if you want it in the JWT)
+
     const token = generateToken({
       id: user.id,
       email: user.email,
       role: user.role,
       lga_scope: user.lga_scope,
     });
-// Don’t send password hash to the client
+
     const { password_hash, ...safeUser } = user;
 
-return res.status(200).json({
+    return res.status(200).json({
       error: false,
       message: "Login successful",
       token,
       user: {
         ...safeUser,
-        lgaAccess,   // <- NEW: either "all" or an array of LGA names
+        lgaAccess,
       },
     });
   } catch (err) {
@@ -149,11 +150,9 @@ return res.status(200).json({
   }
 }
 
-
 // ------------------------------------------------------------
-// RENEW TOKEN (sliding session)
+// RENEW TOKEN
 // POST /api/users/renew
-// Requires valid existing token in Authorization header
 // ------------------------------------------------------------
 async function renewToken(req, res) {
   try {
@@ -198,7 +197,7 @@ async function renewToken(req, res) {
 // ------------------------------------------------------------
 // ACTIVATE USER
 // PATCH /api/users/:id/activate
-// Admin only (checked by middleware)
+// Admin only
 // ------------------------------------------------------------
 async function activateUser(req, res) {
   const userId = parseInt(req.params.id, 10);
@@ -220,6 +219,20 @@ async function activateUser(req, res) {
       return res.status(404).json({
         error: true,
         message: "User not found",
+      });
+    }
+
+    // ✅ Require at least one LGA mapping row before activation
+    const hasLga = await knex("user_lga_access")
+      .where({ user_id: userId })
+      .first();
+
+    if (!hasLga) {
+      return res.status(409).json({
+        error: true,
+        code: "LGA_REQUIRED",
+        message:
+          "Cannot activate user until LGA access has been assigned (All or Specific LGAs).",
       });
     }
 
@@ -288,7 +301,7 @@ async function deactivateUser(req, res) {
 }
 
 // ------------------------------------------------------------
-// LIST PENDING USERS (is_active = 0)
+// LIST PENDING USERS
 // GET /api/users/pending
 // Admin only
 // ------------------------------------------------------------
@@ -313,7 +326,7 @@ async function listPendingUsers(req, res) {
 }
 
 // ------------------------------------------------------------
-// LIST ACTIVE USERS (is_active = 1)
+// LIST ACTIVE USERS
 // GET /api/users/active
 // Admin only
 // ------------------------------------------------------------
@@ -340,7 +353,6 @@ async function listActiveUsers(req, res) {
 // ------------------------------------------------------------
 // CHANGE USER ROLE
 // PATCH /api/users/:id/role
-// body: { role: "user" | "admin" }
 // Admin only
 // ------------------------------------------------------------
 async function changeUserRole(req, res) {
@@ -433,9 +445,8 @@ async function deleteUser(req, res) {
 }
 
 // ------------------------------------------------------------
-// UPDATE USER DETAILS (full_name and role)
+// UPDATE USER DETAILS
 // PATCH /api/users/:id/update
-// body: { full_name, role }
 // Admin only
 // ------------------------------------------------------------
 async function updateUserDetails(req, res) {
@@ -477,12 +488,8 @@ async function updateUserDetails(req, res) {
     }
 
     const updateData = {};
-    if (typeof full_name === "string") {
-      updateData.full_name = full_name;
-    }
-    if (role) {
-      updateData.role = role;
-    }
+    if (typeof full_name === "string") updateData.full_name = full_name;
+    if (role) updateData.role = role;
 
     await knex("users").where({ id: userId }).update(updateData);
 
@@ -501,11 +508,11 @@ async function updateUserDetails(req, res) {
     });
   }
 }
+
 // ------------------------------------------------------------
 // UPDATE USER PASSWORD
 // PATCH /api/users/:id/password
-// Admin or the user themselves
-// body: { password }
+// Admin or same user
 // ------------------------------------------------------------
 async function updateUserPassword(req, res) {
   const userId = parseInt(req.params.id, 10);
@@ -526,7 +533,6 @@ async function updateUserPassword(req, res) {
   }
 
   try {
-    // Permission check — allow admin OR same user
     if (req.user.role !== "admin" && req.user.id !== userId) {
       return res.status(403).json({
         error: true,
@@ -534,11 +540,7 @@ async function updateUserPassword(req, res) {
       });
     }
 
-    const user = await knex("users")
-      .select("id")
-      .where({ id: userId })
-      .first();
-
+    const user = await knex("users").select("id").where({ id: userId }).first();
     if (!user) {
       return res.status(404).json({
         error: true,
@@ -548,9 +550,7 @@ async function updateUserPassword(req, res) {
 
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    await knex("users")
-      .where({ id: userId })
-      .update({ password_hash });
+    await knex("users").where({ id: userId }).update({ password_hash });
 
     return res.json({
       error: false,
@@ -568,7 +568,7 @@ async function updateUserPassword(req, res) {
 // ------------------------------------------------------------
 // CLEAR USER PASSWORD
 // DELETE /api/users/:id/password
-// Admin only — clears password so user cannot log in
+// Admin only
 // ------------------------------------------------------------
 async function clearUserPassword(req, res) {
   const userId = parseInt(req.params.id, 10);
@@ -588,11 +588,7 @@ async function clearUserPassword(req, res) {
       });
     }
 
-    const user = await knex("users")
-      .select("id")
-      .where({ id: userId })
-      .first();
-
+    const user = await knex("users").select("id").where({ id: userId }).first();
     if (!user) {
       return res.status(404).json({
         error: true,
@@ -600,9 +596,7 @@ async function clearUserPassword(req, res) {
       });
     }
 
-    await knex("users")
-      .where({ id: userId })
-      .update({ password_hash: null });
+    await knex("users").where({ id: userId }).update({ password_hash: null });
 
     return res.json({
       error: false,
@@ -616,6 +610,7 @@ async function clearUserPassword(req, res) {
     });
   }
 }
+
 // ------------------------------------------------------------
 // GET USER LGA ACCESS
 // GET /api/users/:id/lgas
@@ -646,7 +641,7 @@ async function getUserLgaAccess(req, res) {
 
     const scope = user.lga_scope || "all";
 
-    // Get available LGAs from dataset
+    // Return counts to support frontend checks
     const availableRows = await knex("length_data")
       .distinct("lga_name")
       .whereNotNull("lga_name")
@@ -654,20 +649,17 @@ async function getUserLgaAccess(req, res) {
 
     const allLgas = availableRows.map((r) => r.lga_name).filter(Boolean);
 
-    const availableCount = allLgas.length;
-
     if (scope === "all") {
-      // ✅ IMPORTANT: make frontend see that access is assigned
+      // For admin UI, return full list so it can display "all" state clearly
       return res.json({
         error: false,
         scope: "all",
-        lgas: allLgas,             // <-- return full list (or could keep [] but then must set assignedCount)
-        availableCount,
-        assignedCount: availableCount,
+        lgas: allLgas,
+        availableCount: allLgas.length,
+        assignedCount: allLgas.length,
       });
     }
 
-    // restricted: read mappings
     const rows = await knex("user_lga_access")
       .select("lga_name")
       .where({ user_id: userId })
@@ -679,7 +671,7 @@ async function getUserLgaAccess(req, res) {
       error: false,
       scope: "restricted",
       lgas,
-      availableCount,
+      availableCount: allLgas.length,
       assignedCount: lgas.length,
     });
   } catch (err) {
@@ -690,7 +682,6 @@ async function getUserLgaAccess(req, res) {
     });
   }
 }
-
 
 // ------------------------------------------------------------
 // UPDATE USER LGA ACCESS
@@ -703,7 +694,10 @@ async function updateUserLgaAccess(req, res) {
   const { scope, lgas } = req.body || {};
 
   if (isNaN(userId)) {
-    return res.status(400).json({ error: true, message: "Invalid user ID" });
+    return res.status(400).json({
+      error: true,
+      message: "Invalid user ID",
+    });
   }
 
   if (!["all", "restricted"].includes(scope)) {
@@ -714,13 +708,16 @@ async function updateUserLgaAccess(req, res) {
   }
 
   try {
-    // make sure user exists
     const user = await knex("users").select("id").where({ id: userId }).first();
+
     if (!user) {
-      return res.status(404).json({ error: true, message: "User not found" });
+      return res.status(404).json({
+        error: true,
+        message: "User not found",
+      });
     }
 
-    // Load ALL available LGAs
+    // Load all available LGAs
     const availableRows = await knex("length_data")
       .distinct("lga_name")
       .whereNotNull("lga_name")
@@ -738,19 +735,15 @@ async function updateUserLgaAccess(req, res) {
     let lgasToAssign = [];
 
     if (scope === "all") {
-      // ✅ ALWAYS assign all LGAs
       lgasToAssign = allLgas;
     } else {
-      // restricted
       if (!Array.isArray(lgas) || lgas.length === 0) {
         return res.status(400).json({
           error: true,
-          message:
-            "When scope is 'restricted', lgas must be a non-empty array",
+          message: "When scope is 'restricted', lgas must be a non-empty array",
         });
       }
 
-      // Keep only valid LGAs
       const validSet = new Set(allLgas);
       lgasToAssign = [...new Set(lgas)].filter((name) => validSet.has(name));
 
@@ -763,16 +756,19 @@ async function updateUserLgaAccess(req, res) {
     }
 
     await knex.transaction(async (trx) => {
-      // update scope
       await trx("users").where({ id: userId }).update({ lga_scope: scope });
 
-      // clear mappings
       await trx("user_lga_access").where({ user_id: userId }).del();
 
-      // ✅ insert rows for BOTH all + restricted
-      await trx("user_lga_access").insert(
-        lgasToAssign.map((lga) => ({ user_id: userId, lga_name: lga }))
-      );
+      const rows = lgasToAssign.map((lga) => ({
+        user_id: userId,
+        lga_name: lga,
+      }));
+
+      if (rows.length > 0) {
+        // ✅ batch insert to avoid oversized INSERT query in hosted DBs
+        await knex.batchInsert("user_lga_access", rows, 500).transacting(trx);
+      }
     });
 
     return res.json({
@@ -790,161 +786,6 @@ async function updateUserLgaAccess(req, res) {
   }
 }
 
-
-
-// ✅ GET /api/users/:id/lgas
-async function getUserLgas(req, res) {
-  const db = req.db;
-  const userId = Number(req.params.id);
-
-  try {
-    const [available, assignedRows] = await Promise.all([
-      getAllAvailableLgas(db),
-      db("user_lga_access")
-        .select("lga_name")
-        .where({ user_id: userId })
-        .orderBy("lga_name"),
-    ]);
-
-    const assigned = assignedRows.map((r) => r.lga_name).filter(Boolean);
-
-    const scope =
-      available.length > 0 && assigned.length === available.length
-        ? "all"
-        : "restricted";
-
-    return res.json({
-      error: false,
-      scope,
-      lgas: assigned,
-      availableCount: available.length,
-      assignedCount: assigned.length,
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({
-      error: true,
-      message: "Failed to load user LGA access",
-    });
-  }
-}
-
-// ✅ PUT /api/users/:id/lgas
-async function putUserLgas(req, res) {
-  const db = req.db;
-  const userId = Number(req.params.id);
-  const { scope, lgas } = req.body || {};
-
-  try {
-    if (scope !== "all" && scope !== "restricted") {
-      return res.status(400).json({
-        error: true,
-        message: "scope must be 'all' or 'restricted'",
-      });
-    }
-
-    const available = await getAllAvailableLgas(db);
-
-    const toAssign =
-      scope === "all"
-        ? available
-        : (Array.isArray(lgas) ? lgas : []).filter(Boolean);
-
-    if (scope === "restricted" && toAssign.length === 0) {
-      return res.status(400).json({
-        error: true,
-        message: "Please select at least one LGA for restricted access",
-      });
-    }
-
-    // Validate requested LGAs actually exist in dataset
-    const availableSet = new Set(available);
-    const invalid = toAssign.filter((x) => !availableSet.has(x));
-    if (invalid.length > 0) {
-      return res.status(400).json({
-        error: true,
-        message: `Invalid LGA(s): ${invalid.slice(0, 5).join(", ")}${
-          invalid.length > 5 ? "…" : ""
-        }`,
-      });
-    }
-
-    // Replace all rows for the user in a transaction
-    await db.transaction(async (trx) => {
-      await trx("user_lga_access").where({ user_id: userId }).del();
-
-      // Insert one row per LGA
-      const unique = Array.from(new Set(toAssign));
-      if (unique.length > 0) {
-        await trx("user_lga_access").insert(
-          unique.map((name) => ({ user_id: userId, lga_name: name }))
-        );
-      }
-    });
-
-    return res.json({
-      error: false,
-      message: "User LGA access updated",
-      scope,
-      assignedCount: toAssign.length,
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({
-      error: true,
-      message: "Failed to update user LGA access",
-    });
-  }
-}
-
-// ✅ PATCH /api/users/:id/activate (modify your existing activateUser)
-async function activateUser(req, res) {
-  const userId = parseInt(req.params.id, 10);
-
-  if (isNaN(userId)) {
-    return res.status(400).json({ error: true, message: "Invalid user ID" });
-  }
-
-  try {
-    const user = await knex("users")
-      .select("id", "email", "full_name", "role", "is_active")
-      .where({ id: userId })
-      .first();
-
-    if (!user) {
-      return res.status(404).json({ error: true, message: "User not found" });
-    }
-
-    // ✅ must have at least 1 mapping row
-    const hasRow = await knex("user_lga_access")
-      .where({ user_id: userId })
-      .first();
-
-    if (!hasRow) {
-      return res.status(409).json({
-        error: true,
-        code: "LGA_REQUIRED",
-        message: "Assign LGAs before activating the user.",
-      });
-    }
-
-    await knex("users").where({ id: userId }).update({ is_active: 1 });
-
-    return res.json({
-      error: false,
-      message: "User activated successfully",
-      user: { ...user, is_active: 1 },
-    });
-  } catch (err) {
-    console.error("Error activating user:", err);
-    return res.status(500).json({
-      error: true,
-      message: "Database error while activating user",
-    });
-  }
-}
-
-
 // ------------------------------------------------------------
 // EXPORTS
 // ------------------------------------------------------------
@@ -959,9 +800,8 @@ module.exports = {
   changeUserRole,
   deleteUser,
   updateUserDetails,
-  updateUserPassword,  
-  clearUserPassword,  
-  getUserLgaAccess,       
-  updateUserLgaAccess, 
- 
+  updateUserPassword,
+  clearUserPassword,
+  getUserLgaAccess,
+  updateUserLgaAccess,
 };

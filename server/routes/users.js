@@ -47,7 +47,7 @@ router.post("/renew", authenticateToken, renewToken);
 // ------------------------------------------------------------
 
 // GET /api/users/:id/lgas
-//router.get("/:id/lgas", authenticateToken, requireAdmin, getUserLgaAccess);
+router.get("/:id/lgas", authenticateToken, requireAdmin, getUserLgaAccess);
 
 // PUT /api/users/:id/lgas
 router.put("/:id/lgas", authenticateToken, requireAdmin, updateUserLgaAccess);
