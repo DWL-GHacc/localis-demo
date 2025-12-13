@@ -14,6 +14,8 @@ import {
   useLengthAvgLOSandBWByLGA,
 } from "../API/lengthApi";
 
+import { getLgaAccess } from "../utils/lgaAccess"
+
 export default function useSharedData(lga, lga2) {
   // historical API
   const historicalRange = useHistoricalDataRange();
@@ -37,8 +39,23 @@ export default function useSharedData(lga, lga2) {
     !lengthRange.data?.Data;
 
   // LGA list
-  const lgaList = distinctLGAs.data?.Data?.map((item) => item.lga_name) || [];
+  const lgaAccess = getLgaAccess();
+   console.log("LGA Access:", lgaAccess);
+  const availableLgaList = distinctLGAs.data?.Data?.map((item) => item.lga_name) || [];
+  const role = localStorage.getItem("role"); // admin / user
+
+  const lgaList =
+    role === "admin"
+      ? availableLgaList
+      : lgaAccess.scope === "restricted"
+      ? availableLgaList.filter((x) => lgaAccess.lgas.includes(x))
+      : availableLgaList;
+
   const allLgaList = [...lgaList, "All Regions"];
+
+
+
+  console.log("Available LGAs from API:", lgaList);
 
   // Ranking
   const rankingOptions = [
