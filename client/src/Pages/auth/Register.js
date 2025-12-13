@@ -138,7 +138,12 @@ export default function Register({ onSuccess, onSwitchToLogin }) {
             )}
           </Button>
 
-          <Button variant="link" className="p-0" onClick={handleSwitchToLogin}>
+          <Button
+            type="button"
+            variant="link"
+            className="p-0"
+            onClick={handleSwitchToLogin}
+             >
             Already have an account? Log in
           </Button>
         </div>

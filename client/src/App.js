@@ -40,6 +40,18 @@ function App() {
   const openRegisterModal = () => setShowRegisterModal(true);
   const closeRegisterModal = () => setShowRegisterModal(false);
 
+  // ✅ NEW: switch Register modal -> Login modal (no page navigation)
+  const switchRegisterToLogin = () => {
+    setShowRegisterModal(false);
+    setShowLoginModal(true);
+  };
+
+  // (optional) also allow switching the other way if you add it later
+  // const switchLoginToRegister = () => {
+  //   setShowLoginModal(false);
+  //   setShowRegisterModal(true);
+  // };
+
   return (
     <BrowserRouter>
       <div className="d-flex flex-column min-vh-100">
@@ -67,21 +79,28 @@ function App() {
             <Modal.Title>Register</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Register onSuccess={closeRegisterModal} />
+            <Register
+              onSuccess={closeRegisterModal}
+              onSwitchToLogin={switchRegisterToLogin} // ✅ PASS THIS
+            />
           </Modal.Body>
         </Modal>
 
         <Container fluid className="flex-grow-1">
           <Routes>
-            {/* ✅ PASS onShowRegister so Home can open the modal */}
-            <Route path="/" element={<Home 
-              onShowRegister={openRegisterModal}  
-              onShowLogin={openLoginModal} 
-              />} />
+            <Route
+              path="/"
+              element={
+                <Home
+                  onShowRegister={openRegisterModal}
+                  onShowLogin={openLoginModal}
+                />
+              }
+            />
 
             <Route path="/demo" element={<Demo />} />
 
-            {/* These routes can stay if you still want direct page navigation available */}
+            {/* Optional direct-page routes can remain */}
             <Route
               path="/user/login"
               element={<Login setIsLoggedIn={setIsLoggedIn} />}
@@ -95,7 +114,6 @@ function App() {
                 path="/dashboard/compare-occupancy"
                 element={<CompareOccupancy />}
               />
-
               <Route path="/admin/users" element={<UserAdmin />} />
               <Route path="/admin/feedback" element={<FeedbackAdmin />} />
             </Route>
