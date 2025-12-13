@@ -1006,7 +1006,7 @@ export default function AccomodationInsights() {
   return (
     <div>
       <Container fluid className="px-4 py-4">
-        <h2>Accomodation Insights</h2>
+        <h2>Accommodation Insights</h2>
         <Tabs
           defaultActiveKey="yearly_performance"
           id="justify-tab-example"

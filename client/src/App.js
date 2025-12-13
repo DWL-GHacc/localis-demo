@@ -119,7 +119,7 @@ function App() {
               element={<div className="text-muted p-4">Page not Found</div>}
             />
             <Route
-              path="/accomodation_insights"
+              path="/dashboard/accommodation"
               element={<AccommodationInSights />}
             ></Route>
             <Route path="/api_test" element={<ApiTest />}></Route>
