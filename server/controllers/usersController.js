@@ -110,7 +110,9 @@ async function loginUser(req, res) {
       });
     }
 
+    // ------------------------------------------------------------
     // Fetch LGA access for this user
+    // ------------------------------------------------------------
     let lgaAccess;
     if (user.lga_scope === "restricted") {
       const rows = await knex("user_lga_access")
@@ -119,27 +121,35 @@ async function loginUser(req, res) {
 
       lgaAccess = rows.map((r) => r.lga_name);
     } else {
-      // "all" (or null default)
+      // "all" (default / admin)
       lgaAccess = "all";
     }
 
-    // ✅ Generate token WITHOUT email
+    // ------------------------------------------------------------
+    // Generate JWT (NO email, NO lga_scope)
+    // ------------------------------------------------------------
     const token = generateToken({
       id: user.id,
       role: user.role,
-      lga_scope: user.lga_scope,
     });
 
-    // ✅ Remove password_hash AND email from returned user object
-    const { password_hash, email: _email, ...safeUser } = user;
+    // ------------------------------------------------------------
+    // Strip sensitive / unused fields from response
+    // ------------------------------------------------------------
+    const {
+      password_hash,
+      email: _email,
+      lga_scope: _lga_scope,
+      ...safeUser
+    } = user;
 
     return res.status(200).json({
       error: false,
       message: "Login successful",
       token,
       user: {
-        ...safeUser, // ✅ no email here now
-        lgaAccess,
+        ...safeUser, // id, full_name, role, is_active
+        lgaAccess,   // ✅ source of truth for permissions
       },
     });
   } catch (err) {
