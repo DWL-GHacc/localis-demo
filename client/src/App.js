@@ -74,7 +74,10 @@ function App() {
         <Container fluid className="flex-grow-1">
           <Routes>
             {/* ✅ PASS onShowRegister so Home can open the modal */}
-            <Route path="/" element={<Home onShowRegister={openRegisterModal} />} />
+            <Route path="/" element={<Home 
+              onShowRegister={openRegisterModal}  
+              onShowLogin={openLoginModal} 
+              />} />
 
             <Route path="/demo" element={<Demo />} />
 

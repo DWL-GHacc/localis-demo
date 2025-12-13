@@ -1,7 +1,7 @@
 import { Container, Row, Col, Button, Card } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
-export default function Home({ onShowRegister }) {
+export default function Home({ onShowRegister, onShowLogin }) {
   const isLoggedIn = !!localStorage.getItem("token");
 
   return (
@@ -15,17 +15,20 @@ export default function Home({ onShowRegister }) {
                   See your destination differently
                 </h1>
                 <p className="lead mb-4">
-                  Access flight, spending and visitor movement data - tailored to
-                  your region and built for smarter decisions.
+                  Access flight, spending and visitor movement data – tailored
+                  to your region and built for smarter decisions.
                 </p>
                 <div className="d-flex gap-2 flex-wrap">
-                  <Button
-                    as={Link}
-                    to={isLoggedIn ? "/dashboard" : "/user/login"}
-                    variant="success"
-                  >
-                    {isLoggedIn ? "Go to Dashboard" : "Log In to your Hub"}
-                  </Button>
+                  {isLoggedIn ? (
+                    <Button as={Link} to="/dashboard" variant="success">
+                      Go to Dashboard
+                    </Button>
+                  ) : (
+                    <Button variant="success" onClick={onShowLogin}>
+                      Log In to your Hub
+                    </Button>
+                  )}
+
                   <Button as={Link} to="/about" variant="light">
                     Learn More
                   </Button>
@@ -98,7 +101,7 @@ export default function Home({ onShowRegister }) {
             <Col md={6}>
               <h2 className="h3">Your region's story, visualised</h2>
               <p className="text-muted">
-                See visitor volumes, spending patterns and accomodation trends
+                See visitor volumes, spending patterns and accommodation trends
                 at a glance. Hover, filter, compare and export in seconds.
               </p>
               <Button as={Link} to="/demo" variant="success">
@@ -115,8 +118,8 @@ export default function Home({ onShowRegister }) {
             <Col lg={{ span: 8, offset: 2 }}>
               <h2 className="h3">Powered by Localis</h2>
               <p className="text-muted mb-4">
-                Trusted by 250+ councils, RTO's and operators accross Australia
-                to support funding, planning and economic development.
+                Trusted by 250+ councils, RTO's and operators across Australia to
+                support funding, planning and economic development.
               </p>
               <div className="mt-4">
                 <img
@@ -130,25 +133,26 @@ export default function Home({ onShowRegister }) {
         </Container>
       </section>
 
+      {/* ✅ BOTTOM CTA FIXED */}
       <section className="py-5 text-center">
         <Container>
           <h2 className="h4 justify-content-center mb-3">
             Ready to explore your destination's insights?
           </h2>
           <div className="d-flex justify-content-center gap-2">
-            <Button
-              as={Link}
-              to={isLoggedIn ? "/dashboard" : "/user/login"}
-              variant="success"
-            >
-              {isLoggedIn ? "Open Dashboard" : "Log In"}
-            </Button>
-
-            {/* ✅ CHANGED: open register modal instead of routing */}
-            {!isLoggedIn && (
-              <Button variant="warning" onClick={onShowRegister}>
-                Request Access
+            {isLoggedIn ? (
+              <Button as={Link} to="/dashboard" variant="success">
+                Open Dashboard
               </Button>
+            ) : (
+              <>
+                <Button variant="success" onClick={onShowLogin}>
+                  Log In
+                </Button>
+                <Button variant="warning" onClick={onShowRegister}>
+                  Request Access
+                </Button>
+              </>
             )}
           </div>
         </Container>
