@@ -20,7 +20,6 @@ async function registerUser(req, res) {
   }
 
   try {
-    // Check if user already exists
     const existing = await knex("users").where({ email }).first();
     if (existing) {
       return res.status(409).json({
@@ -36,7 +35,8 @@ async function registerUser(req, res) {
       password_hash,
       full_name: full_name || null,
       role: "user",
-      is_active: 0, // must be activated by admin
+      is_active: 0,
+      // lga_scope: null,  // optional if column exists
     });
 
     return res.status(201).json({
@@ -76,7 +76,15 @@ async function loginUser(req, res) {
 
   try {
     const user = await knex("users")
-      .select("id", "email", "password_hash", "full_name", "role", "is_active")
+      .select(
+        "id",
+        "email",
+        "password_hash",
+        "full_name",
+        "role",
+        "is_active",
+        "lga_scope"
+      )
       .where({ email })
       .first();
 
@@ -102,14 +110,47 @@ async function loginUser(req, res) {
       });
     }
 
-    const token = generateToken(user);
-    delete user.password_hash;
+    // ------------------------------------------------------------
+    // Fetch LGA access for this user
+    // ------------------------------------------------------------
+    let lgaAccess;
+    if (user.lga_scope === "restricted") {
+      const rows = await knex("user_lga_access")
+        .select("lga_name")
+        .where({ user_id: user.id });
+
+      lgaAccess = rows.map((r) => r.lga_name);
+    } else {
+      // "all" (default / admin)
+      lgaAccess = "all";
+    }
+
+    // ------------------------------------------------------------
+    // Generate JWT (NO email, NO lga_scope)
+    // ------------------------------------------------------------
+    const token = generateToken({
+      id: user.id,
+      role: user.role,
+    });
+
+    // ------------------------------------------------------------
+    // Strip sensitive / unused fields from response
+    // ------------------------------------------------------------
+    const {
+      password_hash,
+      email: _email,
+      lga_scope: _lga_scope,
+      ...safeUser
+    } = user;
 
     return res.status(200).json({
       error: false,
       message: "Login successful",
       token,
-      user,
+      user: {
+        ...safeUser, // id, full_name, role, is_active
+        lgaAccess,   // ✅ source of truth for permissions
+      },
     });
   } catch (err) {
     console.error("Error during login:", err);
@@ -120,10 +161,10 @@ async function loginUser(req, res) {
   }
 }
 
+
 // ------------------------------------------------------------
-// RENEW TOKEN (sliding session)
+// RENEW TOKEN
 // POST /api/users/renew
-// Requires valid existing token in Authorization header
 // ------------------------------------------------------------
 async function renewToken(req, res) {
   try {
@@ -165,51 +206,7 @@ async function renewToken(req, res) {
   }
 }
 
-// ------------------------------------------------------------
-// ACTIVATE USER
-// PATCH /api/users/:id/activate
-// Admin only (checked by middleware)
-// ------------------------------------------------------------
-async function activateUser(req, res) {
-  const userId = parseInt(req.params.id, 10);
 
-  if (isNaN(userId)) {
-    return res.status(400).json({
-      error: true,
-      message: "Invalid user ID",
-    });
-  }
-
-  try {
-    const user = await knex("users")
-      .select("id", "email", "full_name", "role", "is_active")
-      .where({ id: userId })
-      .first();
-
-    if (!user) {
-      return res.status(404).json({
-        error: true,
-        message: "User not found",
-      });
-    }
-
-    await knex("users").where({ id: userId }).update({ is_active: 1 });
-
-    const updated = { ...user, is_active: 1 };
-
-    return res.json({
-      error: false,
-      message: "User activated successfully",
-      user: updated,
-    });
-  } catch (err) {
-    console.error("Error activating user:", err);
-    return res.status(500).json({
-      error: true,
-      message: "Database error while activating user",
-    });
-  }
-}
 
 // ------------------------------------------------------------
 // DEACTIVATE USER
@@ -258,7 +255,7 @@ async function deactivateUser(req, res) {
 }
 
 // ------------------------------------------------------------
-// LIST PENDING USERS (is_active = 0)
+// LIST PENDING USERS
 // GET /api/users/pending
 // Admin only
 // ------------------------------------------------------------
@@ -283,7 +280,7 @@ async function listPendingUsers(req, res) {
 }
 
 // ------------------------------------------------------------
-// LIST ACTIVE USERS (is_active = 1)
+// LIST ACTIVE USERS
 // GET /api/users/active
 // Admin only
 // ------------------------------------------------------------
@@ -310,7 +307,6 @@ async function listActiveUsers(req, res) {
 // ------------------------------------------------------------
 // CHANGE USER ROLE
 // PATCH /api/users/:id/role
-// body: { role: "user" | "admin" }
 // Admin only
 // ------------------------------------------------------------
 async function changeUserRole(req, res) {
@@ -403,9 +399,8 @@ async function deleteUser(req, res) {
 }
 
 // ------------------------------------------------------------
-// UPDATE USER DETAILS (full_name and role)
+// UPDATE USER DETAILS
 // PATCH /api/users/:id/update
-// body: { full_name, role }
 // Admin only
 // ------------------------------------------------------------
 async function updateUserDetails(req, res) {
@@ -447,12 +442,8 @@ async function updateUserDetails(req, res) {
     }
 
     const updateData = {};
-    if (typeof full_name === "string") {
-      updateData.full_name = full_name;
-    }
-    if (role) {
-      updateData.role = role;
-    }
+    if (typeof full_name === "string") updateData.full_name = full_name;
+    if (role) updateData.role = role;
 
     await knex("users").where({ id: userId }).update(updateData);
 
@@ -473,6 +464,273 @@ async function updateUserDetails(req, res) {
 }
 
 // ------------------------------------------------------------
+// UPDATE USER PASSWORD
+// PATCH /api/users/:id/password
+// Admin or same user
+// ------------------------------------------------------------
+async function updateUserPassword(req, res) {
+  const userId = parseInt(req.params.id, 10);
+  const { password } = req.body;
+
+  if (isNaN(userId)) {
+    return res.status(400).json({
+      error: true,
+      message: "Invalid user ID",
+    });
+  }
+
+  if (!password || typeof password !== "string" || password.length < 8) {
+    return res.status(400).json({
+      error: true,
+      message: "Password must be at least 8 characters long",
+    });
+  }
+
+  try {
+    if (req.user.role !== "admin" && req.user.id !== userId) {
+      return res.status(403).json({
+        error: true,
+        message: "You are not allowed to change this password",
+      });
+    }
+
+    const user = await knex("users").select("id").where({ id: userId }).first();
+    if (!user) {
+      return res.status(404).json({
+        error: true,
+        message: "User not found",
+      });
+    }
+
+    const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    await knex("users").where({ id: userId }).update({ password_hash });
+
+    return res.json({
+      error: false,
+      message: "Password updated successfully",
+    });
+  } catch (err) {
+    console.error("Error updating password:", err);
+    return res.status(500).json({
+      error: true,
+      message: "Database error while updating password",
+    });
+  }
+}
+
+// ------------------------------------------------------------
+// CLEAR USER PASSWORD
+// DELETE /api/users/:id/password
+// Admin only
+// ------------------------------------------------------------
+async function clearUserPassword(req, res) {
+  const userId = parseInt(req.params.id, 10);
+
+  if (isNaN(userId)) {
+    return res.status(400).json({
+      error: true,
+      message: "Invalid user ID",
+    });
+  }
+
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        error: true,
+        message: "Only admins can clear a password",
+      });
+    }
+
+    const user = await knex("users").select("id").where({ id: userId }).first();
+    if (!user) {
+      return res.status(404).json({
+        error: true,
+        message: "User not found",
+      });
+    }
+
+    await knex("users").where({ id: userId }).update({ password_hash: null });
+
+    return res.json({
+      error: false,
+      message: "Password cleared successfully",
+    });
+  } catch (err) {
+    console.error("Error clearing password:", err);
+    return res.status(500).json({
+      error: true,
+      message: "Database error while clearing password",
+    });
+  }
+}
+
+// ------------------------------------------------------------
+// GET USER LGA ACCESS
+// GET /api/users/:id/lgas
+// Admin only
+// Returns: { lgas: string[] }
+// ------------------------------------------------------------
+async function getUserLgaAccess(req, res) {
+  const userId = parseInt(req.params.id, 10);
+
+  if (isNaN(userId)) {
+    return res.status(400).json({ error: true, message: "Invalid user ID" });
+  }
+
+  try {
+    const user = await knex("users").select("id").where({ id: userId }).first();
+    if (!user) {
+      return res.status(404).json({ error: true, message: "User not found" });
+    }
+
+    const rows = await knex("user_lga_access")
+      .select("lga_name")
+      .where({ user_id: userId })
+      .orderBy("lga_name", "asc");
+
+    return res.json({
+      error: false,
+      lgas: rows.map((r) => r.lga_name).filter(Boolean),
+    });
+  } catch (err) {
+    console.error("Error getting user LGA access:", err);
+    return res.status(500).json({
+      error: true,
+      message: "Database error while fetching user LGA access",
+    });
+  }
+}
+
+// ------------------------------------------------------------
+// UPDATE USER LGA ACCESS 
+// PUT /api/users/:id/lgas
+// body: { lgas: string[] }
+// Admin only
+// Behavior:
+// - deletes all rows for user
+// - inserts one row per selected LGA
+// ------------------------------------------------------------
+async function updateUserLgaAccess(req, res) {
+  const userId = parseInt(req.params.id, 10);
+  const { lgas } = req.body || {};
+
+  if (isNaN(userId)) {
+    return res.status(400).json({ error: true, message: "Invalid user ID" });
+  }
+
+  if (!Array.isArray(lgas)) {
+    return res.status(400).json({
+      error: true,
+      message: "lgas must be an array (can be empty)",
+    });
+  }
+
+  try {
+    const user = await knex("users").select("id").where({ id: userId }).first();
+    if (!user) {
+      return res.status(404).json({ error: true, message: "User not found" });
+    }
+
+    // load all available LGAs from dataset (server-side validation)
+    const availableRows = await knex("length_data")
+      .distinct("lga_name")
+      .whereNotNull("lga_name")
+      .orderBy("lga_name");
+
+    const available = availableRows.map((r) => r.lga_name).filter(Boolean);
+    const availableSet = new Set(available);
+
+    // keep only valid + unique
+    const selectedUnique = Array.from(new Set(lgas))
+      .filter(Boolean)
+      .filter((name) => availableSet.has(name));
+
+    await knex.transaction(async (trx) => {
+      await trx("user_lga_access").where({ user_id: userId }).del();
+
+      if (selectedUnique.length > 0) {
+        // batch insert to avoid large SQL packet issues
+        const rowsToInsert = selectedUnique.map((name) => ({
+          user_id: userId,
+          lga_name: name,
+        }));
+
+        await knex
+          .batchInsert("user_lga_access", rowsToInsert, 500)
+          .transacting(trx);
+      }
+    });
+
+    return res.json({
+      error: false,
+      message: "User LGA access updated",
+      assignedCount: selectedUnique.length,
+    });
+  } catch (err) {
+    console.error("Error updating user LGA access:", err);
+    return res.status(500).json({
+      error: true,
+      message: "Database error while updating user LGA access",
+    });
+  }
+}
+
+// ------------------------------------------------------------
+// ACTIVATE USER (requires LGA access rows)
+// PATCH /api/users/:id/activate
+// Admin only
+// ------------------------------------------------------------
+async function activateUser(req, res) {
+  const userId = parseInt(req.params.id, 10);
+
+  if (isNaN(userId)) {
+    return res.status(400).json({ error: true, message: "Invalid user ID" });
+  }
+
+  try {
+    const user = await knex("users")
+      .select("id", "email", "full_name", "role", "is_active")
+      .where({ id: userId })
+      .first();
+
+    if (!user) {
+      return res.status(404).json({ error: true, message: "User not found" });
+    }
+
+    const hasLga = await knex("user_lga_access")
+      .where({ user_id: userId })
+      .first();
+
+    if (!hasLga) {
+      return res.status(409).json({
+        error: true,
+        code: "LGA_REQUIRED",
+        message:
+          "Cannot activate user until LGA access is assigned. Click 'LGAs' and select at least one.",
+      });
+    }
+
+    await knex("users").where({ id: userId }).update({ is_active: 1 });
+
+    return res.json({
+      error: false,
+      message: "User activated successfully",
+      user: { ...user, is_active: 1 },
+    });
+  } catch (err) {
+    console.error("Error activating user:", err);
+    return res.status(500).json({
+      error: true,
+      message: "Database error while activating user",
+    });
+  }
+}
+
+
+
+
+// ------------------------------------------------------------
 // EXPORTS
 // ------------------------------------------------------------
 module.exports = {
@@ -486,4 +744,8 @@ module.exports = {
   changeUserRole,
   deleteUser,
   updateUserDetails,
+  updateUserPassword,
+  clearUserPassword,
+  getUserLgaAccess,
+  updateUserLgaAccess,
 };

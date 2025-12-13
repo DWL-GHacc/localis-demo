@@ -1,7 +1,4 @@
-// client/src/Pages/admin/FeedbackAdmin.jsx
-
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { authFetch } from "../../API/authClient";
 
 const FEEDBACK_TYPES = [
@@ -66,22 +63,8 @@ const FeedbackAdmin = () => {
 
   return (
     <div className="container py-4">
-      {/* Breadcrumbs */}
-      <nav aria-label="breadcrumb" className="mb-3">
-        <ol className="breadcrumb mb-1">
-          <li className="breadcrumb-item">
-            <Link to="/">Home</Link>
-          </li>
-          <li className="breadcrumb-item">
-            <Link to="/admin">Admin</Link>
-          </li>
-          <li className="breadcrumb-item active" aria-current="page">
-            Feedback
-          </li>
-        </ol>
-      </nav>
-
       <h1 className="h4 mb-3">Feedback Administration</h1>
+
       <p className="text-muted mb-3">
         Review feedback submitted by users. Use the filter to focus on specific
         types.
@@ -90,6 +73,7 @@ const FeedbackAdmin = () => {
       {/* Filter controls */}
       <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
         <span className="me-2 fw-semibold">Filter by type:</span>
+
         <div className="btn-group">
           {FEEDBACK_TYPES.map((t) => (
             <button

@@ -1,115 +1,130 @@
 // client/src/Pages/auth/Login.jsx
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { API_BASE } from "../../API/authClient";
+import { useNavigate } from "react-router-dom";
+import { Form, Button, Alert, Modal } from "react-bootstrap";
+import { authFetch } from "../../API/authClient"; 
 
-const Login = ({ setIsLoggedIn, onSuccess }) => {
+export default function Login({ setIsLoggedIn, onSuccess }) {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [message, setMessage] = useState(null);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  // ✅ Inactive/403 modal state
+  const [showInactive, setShowInactive] = useState(false);
+  const [inactiveMessage, setInactiveMessage] = useState(
+    "Your account exists, but it has not yet been activated by an administrator."
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage(null);
+    setError("");
+    setSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE}/api/users/login`, {
+      const { response, data } = await authFetch("/api/users/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
+        body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok || data.error) {
-        setMessage(data.message || data.error || "Login failed");
+      // ✅ Any 403 => show modal (covers inactive accounts cleanly)
+      if (response.status === 403) {
+        setInactiveMessage(
+          data?.message ||
+            "Your account exists, but it has not yet been activated by an administrator."
+        );
+        setShowInactive(true);
         return;
       }
 
-      const { token, user } = data;
-      if (!token || !user) {
-        setMessage("Invalid response from server (missing token or user).");
+      // Other errors
+      if (!response.ok || data?.error) {
+        setError(data?.message || "Login failed");
         return;
       }
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", user.role || "");
-      localStorage.setItem("userName", user.full_name || user.email || "");
+      // Success: persist auth + user
+      localStorage.setItem("token", data.token);
 
-      if (setIsLoggedIn) setIsLoggedIn(true);
+      if (data?.user?.role) localStorage.setItem("role", data.user.role);
+      if (data?.user?.full_name) localStorage.setItem("userName", data.user.full_name);
+      //if (data?.user?.email) localStorage.setItem("userEmail", data.user.email);
 
-      // default after login
+      // Optional: store LGA access if you use it client-side
+      if (data?.user?.lgaAccess !== undefined) {
+        localStorage.setItem("lgaAccess", JSON.stringify(data.user.lgaAccess));
+      }
+
+      if (typeof setIsLoggedIn === "function") setIsLoggedIn(true);
+
+      // close modal if provided (App.js passes onSuccess to close the login modal)
+      if (typeof onSuccess === "function") onSuccess();
+
+      // navigate to dashboard (optional, but typical)
       navigate("/dashboard");
-
-      if (onSuccess) onSuccess();
     } catch (err) {
-      console.error(err);
-      setMessage("Network or server error while logging in.");
+      setError("Network or server error while logging in.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="p-3" style={{ maxWidth: "400px", margin: "0 auto" }}>
-      <h1 className="h4 mb-3">Log in</h1>
+    <>
+      {error && <Alert variant="danger">{error}</Alert>}
 
-      {message && <div className="alert alert-danger py-2">{message}</div>}
-
-      <form onSubmit={handleSubmit}>
-        {/* email */}
-        <div className="mb-3">
-          <label className="form-label" htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
+      <Form onSubmit={handleSubmit}>
+        <Form.Group className="mb-3" controlId="loginEmail">
+          <Form.Label>Email</Form.Label>
+          <Form.Control
             type="email"
-            className="form-control"
-            value={formData.email}
-            onChange={handleChange}
+            autoComplete="username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@example.com"
             required
           />
-        </div>
+        </Form.Group>
 
-        {/* password */}
-        <div className="mb-3">
-          <label className="form-label" htmlFor="password">
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
+        <Form.Group className="mb-3" controlId="loginPassword">
+          <Form.Label>Password</Form.Label>
+          <Form.Control
             type="password"
-            className="form-control"
-            value={formData.password}
-            onChange={handleChange}
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Your password"
             required
           />
+        </Form.Group>
+
+        <div className="d-grid">
+          <Button type="submit" disabled={submitting}>
+            {submitting ? "Logging in..." : "Log in"}
+          </Button>
         </div>
+      </Form>
 
-        <button type="submit" className="btn btn-success w-100">
-          Log in
-        </button>
-      </form>
-
-      <hr className="my-4" />
-
-      <p className="text-center mb-2">New to Localis?</p>
-      <div className="d-grid">
-        <Link to="/user/register" className="btn btn-outline-primary">
-          Register as a new user
-        </Link>
-      </div>
-    </div>
+      {/* ✅ 403 / ACCOUNT INACTIVE MODAL */}
+      <Modal show={showInactive} onHide={() => setShowInactive(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Account not active yet</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="mb-2">{inactiveMessage}</p>
+          <p className="mb-0">
+            Please try again later, or contact your administrator to activate your account.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowInactive(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
-};
-
-export default Login;
+}

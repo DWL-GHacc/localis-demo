@@ -86,26 +86,47 @@ router.get("/regions", async (req, res, next) => {
       });
 });
 
-// Get spend by category
+// Get spend by category !!!!!! Edited by EW
 router.get("/spend_by_category", async (req, res, next) => {
-    req.db
+    const { region, start, end } = req.query;
+
+
+    let query = req.db
       .from("spend_data")
       .select(
         "category",
-        req.db.raw("SUM(spend) AS total_spend"),
-        req.db.raw("SUM(no_txns) AS total_transactions"),
-        req.db.raw("SUM(cards_seen) AS total_cards_seen")
-      )
-      .groupBy("category")
-      .orderBy("total_spend", "desc")
-      .then((rows) => {
-        res.json({ Error: false, Message: "success", Data: rows });
-      })
-      .catch((err) => {
-        console.log(err);
-        res.json({ Error: true, Message: "Error executing MySQL query" });
-      });
+        req.db.raw("ROUND(SUM(spend) / 1000000, 2) AS total_spend_millions"),
+        req.db.raw("ROUND(SUM(no_txns), 0) AS total_transactions"),
+        req.db.raw("ROUND(SUM(cards_seen), 0) AS total_cards_seen")
+      );
+
+      if (region){
+        query = query.where("region", region);
+      }
+
+      if (start && end) {
+        query = query.whereBetween("spend_date", [start, end]);
+      } else if (start) {
+        query = query.where("spend_date", ">=", start);
+      }else if (end) {
+    query = query.where("spend_date", "<=", end);
+  }
+
+  // Group + order
+  query = query
+    .groupBy("category")
+    .orderBy("total_spend_millions", "desc");
+
+  query
+    .then((rows) => {
+      res.json({ Error: false, Message: "success", Data: rows });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.json({ Error: true, Message: "Error executing MySQL query" });
+    });
 });
+
 
 
 // Get spend intensity per region
@@ -170,7 +191,7 @@ router.get("/category_spend_per_region", async (req, res, next) => {
 
     // const region = "Gold Coast"; // for testing
     // frontend request URL example:
-    // http://localhost:3000/spend_data/category_spend_per_region?region=Gold%20Coast
+    // https://localis-demo.onrender.com/spend_data/category_spend_per_region?region=Gold%20Coast
 
     if (!region) {
       return res.status(400).json({ Error: true, Message: "Missing region parameter" });
@@ -224,6 +245,51 @@ router.get("/monthly_spend_per_region", async (req, res, next) => {
         res.json({ Error: true, Message: "Error executing MySQL query" });
       });
 });
+//Get spend by region & Category
+router.get("/spend_by_region_category", async(req, res, next) => {
+  const { year, month } = req.query;
+  try {
+    const db = req.db;
 
+    let query = db("spend_data")
+      .select(
+        "region",
+        "category",
+        db.raw("YEAR(spend_date) AS year"),
+        db.raw("MONTH(spend_date) AS month"),
+        db.raw("SUM(spend) AS total_spend"),
+        db.raw("SUM(no_txns) AS total_txns")
+      )
+      .groupBy(
+        "region",
+        "category",
+        db.raw("YEAR(spend_date)"),
+        db.raw("MONTH(spend_date)")
+      )
+      .orderBy([
+        { column: "year", order:"desc" },
+        { column: "month", order: "desc" },
+        { column: "total_spend", order:"desc" },
+      ]);
+
+      if (year) {
+        query = query.whereRaw("YEAR(spend_date) = ?", [year]);
+      }
+
+      if (month) {
+        const monthNum = Number(month);
+        query = query.whereRaw("MONTH(spend_date) = ?", [monthNum]);
+      }
+
+      const rows = await query;
+      return res.json({ Error: false, Message: "success", Data: rows });
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      Error: true,
+      Message: "Error executing MySQL query",
+    });
+  }
+});
 
 module.exports = router;

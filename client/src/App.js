@@ -10,16 +10,16 @@ import Header from "./Components/header";
 import Home from "./Pages/home";
 import AccommodationInSights from "./Pages/accomodation_insights";
 import ApiTest from "./Pages/api_test";
-import Contact from "./Pages/Contact";
 import Dashboard from "./Pages/Dashboard";
+import Spend from "./Pages/spend";
 import Login from "./Pages/auth/Login";
 import Register from "./Pages/auth/Register";
 import UserAdmin from "./Pages/admin/UserAdmin";
 import PrivateRoutes from "./routes/PrivateRoutes";
 import Footer from "./Components/footer";
 import "./index.css";
-import Admin from "./Pages/Admin";
 import FeedbackAdmin from "./Pages/admin/FeedbackAdmin";
+import Demo from "./Pages/Demo";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
@@ -30,8 +30,27 @@ function App() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("userName");
+    localStorage.removeItem("lgaAccess");
     setIsLoggedIn(false);
   };
+
+  const openLoginModal = () => setShowLoginModal(true);
+  const closeLoginModal = () => setShowLoginModal(false);
+
+  const openRegisterModal = () => setShowRegisterModal(true);
+  const closeRegisterModal = () => setShowRegisterModal(false);
+
+  // ✅ NEW: switch Register modal -> Login modal (no page navigation)
+  const switchRegisterToLogin = () => {
+    setShowRegisterModal(false);
+    setShowLoginModal(true);
+  };
+
+  // (optional) also allow switching the other way if you add it later
+  // const switchLoginToRegister = () => {
+  //   setShowLoginModal(false);
+  //   setShowRegisterModal(true);
+  // };
 
   return (
     <BrowserRouter>
@@ -40,46 +59,48 @@ function App() {
           isLoggedIn={isLoggedIn}
           onLogOut={handleLogOut}
           role={localStorage.getItem("role")}
-          onShowLogin={() => setShowLoginModal(true)}
-          onShowRegister={() => setShowRegisterModal(true)}
+          onShowLogin={openLoginModal}
+          onShowRegister={openRegisterModal}
         />
 
         {/* LOGIN MODAL */}
-        <Modal
-          show={showLoginModal}
-          onHide={() => setShowLoginModal(false)}
-          centered
-        >
+        <Modal show={showLoginModal} onHide={closeLoginModal} centered>
           <Modal.Header closeButton>
             <Modal.Title>Log in</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Login
-              setIsLoggedIn={setIsLoggedIn}
-              onSuccess={() => setShowLoginModal(false)}
-            />
+            <Login setIsLoggedIn={setIsLoggedIn} onSuccess={closeLoginModal} />
           </Modal.Body>
         </Modal>
 
         {/* REGISTER MODAL */}
-        <Modal
-          show={showRegisterModal}
-          onHide={() => setShowRegisterModal(false)}
-          centered
-        >
+        <Modal show={showRegisterModal} onHide={closeRegisterModal} centered>
           <Modal.Header closeButton>
             <Modal.Title>Register</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Register onSuccess={() => setShowRegisterModal(false)} />
+            <Register
+              onSuccess={closeRegisterModal}
+              onSwitchToLogin={switchRegisterToLogin} // ✅ PASS THIS
+            />
           </Modal.Body>
         </Modal>
 
         <Container fluid className="flex-grow-1">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/contact" element={<Contact />} />
+            <Route
+              path="/"
+              element={
+                <Home
+                  onShowRegister={openRegisterModal}
+                  onShowLogin={openLoginModal}
+                />
+              }
+            />
 
+            <Route path="/demo" element={<Demo />} />
+
+            {/* Optional direct-page routes can remain */}
             <Route
               path="/user/login"
               element={<Login setIsLoggedIn={setIsLoggedIn} />}
@@ -88,7 +109,7 @@ function App() {
 
             <Route element={<PrivateRoutes />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/admin" element={<Admin />} />
+              <Route path="/dashboard/spend" element={<Spend />} />
               <Route path="/admin/users" element={<UserAdmin />} />
               <Route path="/admin/feedback" element={<FeedbackAdmin />} />
             </Route>

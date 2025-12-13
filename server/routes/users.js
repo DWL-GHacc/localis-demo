@@ -13,6 +13,12 @@ const {
   changeUserRole,
   deleteUser,
   updateUserDetails,
+  updateUserPassword, 
+  clearUserPassword,
+  getUserLgaAccess,
+  updateUserLgaAccess,
+  //getUserLgas,
+  //putUserLgas,
 } = require("../controllers/usersController");
 
 const {
@@ -34,10 +40,18 @@ router.post("/login", loginUser);
 // Requires valid token (checked by authenticateToken)
 router.post("/renew", authenticateToken, renewToken);
 
+
 // ------------------------------------------------------------
 // ADMIN-ONLY USER MANAGEMENT ROUTES
 // (authenticateToken + requireAdmin)
 // ------------------------------------------------------------
+
+// GET /api/users/:id/lgas
+router.get("/:id/lgas", authenticateToken, requireAdmin, getUserLgaAccess);
+
+// PUT /api/users/:id/lgas
+router.put("/:id/lgas", authenticateToken, requireAdmin, updateUserLgaAccess);
+
 
 // PATCH /api/users/:id/activate
 router.patch("/:id/activate", authenticateToken, requireAdmin, activateUser);
@@ -65,6 +79,21 @@ router.patch(
 
 // DELETE /api/users/:id
 router.delete("/:id", authenticateToken, requireAdmin, deleteUser);
+
+// Manage user passwords
+router.patch("/:id/password", authenticateToken, updateUserPassword);
+router.delete("/:id/password", authenticateToken, clearUserPassword);
+// Manage user passwords (admin only from admin UI)
+router.patch("/:id/password", authenticateToken, requireAdmin, updateUserPassword);
+router.delete("/:id/password", authenticateToken, requireAdmin, clearUserPassword);
+
+// LGA access management
+// GET /api/users/:id/lgas
+//router.get("/:id/lgas", authenticateToken, requireAdmin, getUserLgas);
+
+// PUT /api/users/:id/lgas
+// body: { scope: "all" | "restricted", lgas: string[] }
+//router.put("/:id/lgas", authenticateToken, requireAdmin, putUserLgas);
 
 module.exports = router;
 

@@ -1,149 +1,153 @@
-// client/src/Pages/auth/Register.jsx
+// client/src/Pages/auth/Register.js
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { API_BASE } from "../../API/authClient";
+import { useNavigate } from "react-router-dom";
+import { Form, Button, Alert, Spinner } from "react-bootstrap";
 
-const Register = ({ onSuccess }) => {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [message, setMessage] = useState(null);
+// IMPORTANT:
+// Use the same import path/casing you use elsewhere in your project.
+// If your folder is /src/API (uppercase), use "../../API/authClient"
+import { authFetch } from "../../API/authClient";
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+export default function Register({ onSuccess, onSwitchToLogin }) {
+  const navigate = useNavigate();
+
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+
+  const handleSwitchToLogin = (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccessMsg("");
+
+    // ✅ modal flow: switch to login modal
+    if (onSwitchToLogin) return onSwitchToLogin();
+
+    // fallback: page navigation
+    navigate("/user/login");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setSuccessMsg("");
 
-    if (formData.password !== formData.confirmPassword) {
-      setMessage("Passwords do not match");
+    if (!email || !password) {
+      setError("Email and password are required.");
       return;
     }
 
+    setSubmitting(true);
+
     try {
-      const response = await fetch(`${API_BASE}/api/users/register`, {
+      const payload = {
+        email: email.trim(),
+        password,
+        full_name: fullName.trim() || undefined,
+      };
+
+      const { response, data } = await authFetch("/api/users/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          full_name: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-        }),
+        body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
-
-      if (!response.ok || data.error) {
-        setMessage(data.error || data.message || "Registration failed");
+      if (!response.ok) {
+        setError(data?.message || "Registration failed. Please try again.");
+        setSubmitting(false);
         return;
       }
 
-      setMessage(
-        "Registration submitted successfully. You may need to wait for activation."
+      setSuccessMsg(
+        data?.message ||
+          "Registration submitted. An administrator may need to activate your account."
       );
 
+      // ✅ If you're using the modal: close it
       if (onSuccess) onSuccess();
+
+      // If this Register component is used as a page, you can optionally redirect:
+      // navigate("/user/login");
     } catch (err) {
-      console.error(err);
-      setMessage("Network or server error while registering.");
+      setError("Network or server error. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="container py-4" style={{ maxWidth: "600px" }}>
-      <h1 className="h4 mb-3">Register a new account</h1>
-      <p className="text-muted mb-4">
-        Fill in the details below to request access to the Localis dashboard.
-      </p>
+    <>
+      {error && <Alert variant="danger">{error}</Alert>}
+      {successMsg && <Alert variant="success">{successMsg}</Alert>}
 
-      {message && <div className="alert alert-info py-2">{message}</div>}
-
-      <form onSubmit={handleSubmit}>
-        {/* Full name */}
-        <div className="mb-3">
-          <label htmlFor="fullName" className="form-label">
-            Full name
-          </label>
-          <input
+      <Form onSubmit={handleSubmit}>
+        <Form.Group className="mb-3" controlId="registerFullName">
+          <Form.Label>Full name (optional)</Form.Label>
+          <Form.Control
             type="text"
-            id="fullName"
-            name="fullName"
-            className="form-control"
-            value={formData.fullName}
-            onChange={handleChange}
-            required
+            placeholder="e.g. David Leary"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            autoComplete="name"
           />
-        </div>
+        </Form.Group>
 
-        {/* Email */}
-        <div className="mb-3">
-          <label htmlFor="email" className="form-label">
-            Email address
-          </label>
-          <input
+        <Form.Group className="mb-3" controlId="registerEmail">
+          <Form.Label>Email</Form.Label>
+          <Form.Control
             type="email"
-            id="email"
-            name="email"
-            className="form-control"
-            value={formData.email}
-            onChange={handleChange}
+            placeholder="you@council.nsw.gov.au"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
             required
           />
-          <div className="form-text">
-            This will be used as your login username.
-          </div>
-        </div>
+        </Form.Group>
 
-        {/* Password */}
-        <div className="mb-3">
-          <label htmlFor="password" className="form-label">
-            Password
-          </label>
-          <input
+        <Form.Group className="mb-3" controlId="registerPassword">
+          <Form.Label>Password</Form.Label>
+          <Form.Control
             type="password"
-            id="password"
-            name="password"
-            className="form-control"
-            value={formData.password}
-            onChange={handleChange}
+            placeholder="Create a password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
             required
-            minLength={8}
           />
-          <div className="form-text">Use at least 8 characters.</div>
+        </Form.Group>
+
+        <div className="d-grid gap-2">
+          <Button type="submit" variant="success" disabled={submitting}>
+            {submitting ? (
+              <>
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  role="status"
+                  aria-hidden="true"
+                  className="me-2"
+                />
+                Creating account...
+              </>
+            ) : (
+              "Request Access"
+            )}
+          </Button>
+
+          <Button
+            type="button"
+            variant="link"
+            className="p-0"
+            onClick={handleSwitchToLogin}
+             >
+            Already have an account? Log in
+          </Button>
         </div>
-
-        {/* Confirm Password */}
-        <div className="mb-4">
-          <label htmlFor="confirmPassword" className="form-label">
-            Confirm password
-          </label>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            className="form-control"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-            minLength={8}
-          />
-        </div>
-
-        <button type="submit" className="btn btn-primary w-100">
-          Submit registration
-        </button>
-      </form>
-
-      <p className="mt-3 mb-0">
-        Already have an account? <Link to="/user/login">Go back to login</Link>
-      </p>
-    </div>
+      </Form>
+    </>
   );
-};
-
-export default Register;
+}

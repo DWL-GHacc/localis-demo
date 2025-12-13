@@ -1,8 +1,6 @@
-// client/src/Components/header.jsx
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Navbar, Nav, Container, Button } from "react-bootstrap";
+import { Navbar, Nav, Container, Button, NavDropdown } from "react-bootstrap";
 
 const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => {
   const navigate = useNavigate();
@@ -16,10 +14,15 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
   };
 
   return (
-    <Navbar bg="dark" variant="dark" expand="lg" className="mb-3">
+    <Navbar bg="light" variant="light" expand="lg" className="mb-3">
       <Container>
-        <Navbar.Brand as={Link} to="/">
-          Localis Prototype
+        <Navbar.Brand as={Link} to="/" className="d-flex p-2">
+          <img
+            src="/images/localis-dih-blk.svg"
+            alt="Localis Destination Insight Hub logo"
+            width="300"
+            height="auto"
+          />
         </Navbar.Brand>
 
         <Navbar.Toggle aria-controls="main-navbar-nav" />
@@ -37,11 +40,16 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
               </Nav.Link>
             )}
 
-            {/* ADMIN HUB LINK */}
+            {/* ADMIN DROPDOWN (admins only) */}
             {isLoggedIn && isAdmin && (
-              <Nav.Link as={Link} to="/admin">
-                Admin
-              </Nav.Link>
+              <NavDropdown title="Admin" id="admin-nav-dropdown">
+                <NavDropdown.Item as={Link} to="/admin/users">
+                  User Admin
+                </NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/admin/feedback">
+                  Feedback Admin
+                </NavDropdown.Item>
+              </NavDropdown>
             )}
           </Nav>
 
@@ -50,7 +58,7 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
             {!isLoggedIn && (
               <>
                 <Button
-                  variant="outline-light"
+                  variant="dark"
                   size="sm"
                   className="me-2"
                   onClick={onShowLogin}
@@ -58,11 +66,7 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
                   Log in
                 </Button>
 
-                <Button
-                  variant="light"
-                  size="sm"
-                  onClick={onShowRegister}
-                >
+                <Button variant="dark" size="sm" onClick={onShowRegister}>
                   Register
                 </Button>
               </>
@@ -75,11 +79,7 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
                   <strong>{localStorage.getItem("userName") || "User"}</strong>
                 </Navbar.Text>
 
-                <Button
-                  variant="outline-light"
-                  size="sm"
-                  onClick={handleLogoutClick}
-                >
+                <Button variant="dark" size="sm" onClick={handleLogoutClick}>
                   Log out
                 </Button>
               </>

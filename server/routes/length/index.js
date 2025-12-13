@@ -79,7 +79,7 @@ router.get("/ave_LOS_period", async (req, res, next) => {
     console.log(`Start: ${start}, End: ${end}`);
 
     // frontend request URL example:
-    // http://localhost:3000/length_data/ave_LOS_period?start=2023-01-01&end=2023-12-31
+    // https://localis-demo.onrender.com/length_data/ave_LOS_period?start=2023-01-01&end=2023-12-31
 
     // for testing
     // const start = "2023-01-01";
@@ -114,7 +114,11 @@ router.get("/ave_LOS_BW_by_LGA", async (req, res, next) => {
     console.log(`LGA: ${lga}`);
 
     // frontend request URL example:
+<<<<<<< HEAD:server/routes/Length/index.js
     // http://localhost:3000/length_data/ave_LOS_BW_by_LGA?lga_name=Gold%20Coast;
+=======
+    // https://localis-demo.onrender.com/length_data/ave_LOS_by_LGA?lga_name=Gold%20Coast;
+>>>>>>> b8d0504e7f263f4c3b400e0e9c5052a095f0127d:server/routes/length/index.js
 
     // const lga = "Gold Coast"; // for testing
 
