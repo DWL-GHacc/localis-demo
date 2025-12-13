@@ -1,9 +1,5 @@
 // client/src/App.js
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Container, Modal } from "react-bootstrap";
 import { useState } from "react";
 
@@ -12,24 +8,21 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 import Header from "./Components/header";
 import Home from "./Pages/home";
-import CompareOccupancy from "./Pages/compare_occupancy"
+import CompareOccupancy from "./Pages/compare_occupancy";
 import ApiTest from "./Pages/api_test";
 import Dashboard from "./Pages/Dashboard";
 import Spend from "./Pages/spend";
 import Login from "./Pages/auth/Login";
 import Register from "./Pages/auth/Register";
-import UserAdmin from "./Pages/admin/UserAdmin";  
+import UserAdmin from "./Pages/admin/UserAdmin";
 import PrivateRoutes from "./routes/PrivateRoutes";
 import Footer from "./Components/footer";
 import "./index.css";
-//import Admin from "./Pages/Admin";
 import FeedbackAdmin from "./Pages/admin/FeedbackAdmin";
 import Demo from "./Pages/Demo";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    !!localStorage.getItem("token")
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
 
@@ -37,9 +30,15 @@ function App() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("userName");
-    localStorage.removeItem("lgaAccess"); 
+    localStorage.removeItem("lgaAccess");
     setIsLoggedIn(false);
   };
+
+  const openLoginModal = () => setShowLoginModal(true);
+  const closeLoginModal = () => setShowLoginModal(false);
+
+  const openRegisterModal = () => setShowRegisterModal(true);
+  const closeRegisterModal = () => setShowRegisterModal(false);
 
   return (
     <BrowserRouter>
@@ -48,46 +47,38 @@ function App() {
           isLoggedIn={isLoggedIn}
           onLogOut={handleLogOut}
           role={localStorage.getItem("role")}
-          onShowLogin={() => setShowLoginModal(true)}
-          onShowRegister={() => setShowRegisterModal(true)}
+          onShowLogin={openLoginModal}
+          onShowRegister={openRegisterModal}
         />
 
         {/* LOGIN MODAL */}
-        <Modal
-          show={showLoginModal}
-          onHide={() => setShowLoginModal(false)}
-          centered
-        >
+        <Modal show={showLoginModal} onHide={closeLoginModal} centered>
           <Modal.Header closeButton>
             <Modal.Title>Log in</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Login
-              setIsLoggedIn={setIsLoggedIn}
-              onSuccess={() => setShowLoginModal(false)}
-            />
+            <Login setIsLoggedIn={setIsLoggedIn} onSuccess={closeLoginModal} />
           </Modal.Body>
         </Modal>
 
         {/* REGISTER MODAL */}
-        <Modal
-          show={showRegisterModal}
-          onHide={() => setShowRegisterModal(false)}
-          centered
-        >
+        <Modal show={showRegisterModal} onHide={closeRegisterModal} centered>
           <Modal.Header closeButton>
             <Modal.Title>Register</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Register onSuccess={() => setShowRegisterModal(false)} />
+            <Register onSuccess={closeRegisterModal} />
           </Modal.Body>
         </Modal>
 
         <Container fluid className="flex-grow-1">
           <Routes>
-            <Route path="/" element={<Home />} />
+            {/* ✅ PASS onShowRegister so Home can open the modal */}
+            <Route path="/" element={<Home onShowRegister={openRegisterModal} />} />
+
             <Route path="/demo" element={<Demo />} />
 
+            {/* These routes can stay if you still want direct page navigation available */}
             <Route
               path="/user/login"
               element={<Login setIsLoggedIn={setIsLoggedIn} />}
@@ -97,8 +88,10 @@ function App() {
             <Route element={<PrivateRoutes />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/spend" element={<Spend />} />
-              <Route path="/dashboard/compare-occupancy" element={<CompareOccupancy />} />
-
+              <Route
+                path="/dashboard/compare-occupancy"
+                element={<CompareOccupancy />}
+              />
 
               <Route path="/admin/users" element={<UserAdmin />} />
               <Route path="/admin/feedback" element={<FeedbackAdmin />} />
@@ -108,8 +101,8 @@ function App() {
               path="*"
               element={<div className="text-muted p-4">Page not Found</div>}
             />
-            
-            <Route path="/api_test" element={<ApiTest />}></Route>
+
+            <Route path="/api_test" element={<ApiTest />} />
           </Routes>
         </Container>
 
