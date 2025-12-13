@@ -8,7 +8,6 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 import Header from "./Components/header";
 import Home from "./Pages/home";
-import CompareOccupancy from "./Pages/compare_occupancy";
 import AccommodationInSights from "./Pages/accomodation_insights";
 import ApiTest from "./Pages/api_test";
 import Contact from "./Pages/Contact";
@@ -98,10 +97,6 @@ function App() {
               path="*"
               element={<div className="text-muted p-4">Page not Found</div>}
             />
-            <Route
-              path="/compare_occupancy"
-              element={<CompareOccupancy />}
-            ></Route>
             <Route
               path="/accomodation_insights"
               element={<AccommodationInSights />}

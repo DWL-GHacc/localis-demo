@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { authFetch } from "../../api/authClient";
+import { authFetch } from "../../API/authClient";
 
 const FEEDBACK_TYPES = [
   { value: "all", label: "All types" },
@@ -30,7 +30,9 @@ const FeedbackAdmin = () => {
       const { response, data } = await authFetch("/api/feedback/all");
 
       if (!response.ok || data?.error) {
-        throw new Error(data?.message || data?.error || "Failed to load feedback");
+        throw new Error(
+          data?.message || data?.error || "Failed to load feedback"
+        );
       }
 
       setFeedback(Array.isArray(data.feedback) ? data.feedback : []);
@@ -81,7 +83,8 @@ const FeedbackAdmin = () => {
 
       <h1 className="h4 mb-3">Feedback Administration</h1>
       <p className="text-muted mb-3">
-        Review feedback submitted by users. Use the filter to focus on specific types.
+        Review feedback submitted by users. Use the filter to focus on specific
+        types.
       </p>
 
       {/* Filter controls */}

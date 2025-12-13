@@ -75,9 +75,9 @@ export default function ApiTest() {
       <p>Data:{" "}{.data ? JSON.stringify(.data) : "No data"}</p>
       <p>Error: {.error ? .error.message : "No error"}</p> */}
 
-      {/* <p>Loading: {historicalAllData.loading ? "true" : "false"}</p>
+      <p>Loading: {historicalAllData.loading ? "true" : "false"}</p>
       <p>Data: {historicalAllData.data ? JSON.stringify(historicalAllData.data) : "No data"}</p>
-      <p>Error: {historicalAllData.error ? historicalAllData.error.message : "No error"}</p> */}
+      <p>Error: {historicalAllData.error ? historicalAllData.error.message : "No error"}</p>
 
       {/* <p>Loading: {historicalRangeData.loading ? "true" : "false"}</p>
       <p>Data: {historicalRangeData.data ? JSON.stringify(historicalRangeData.data) : "No data"}</p>
@@ -131,9 +131,9 @@ export default function ApiTest() {
       <p>Data:{" "}{lengthMonthlyLOSBWPerLGA.data ? JSON.stringify(lengthMonthlyLOSBWPerLGA.data) : "No data"}</p>
       <p>Error: {lengthMonthlyLOSBWPerLGA.error ? lengthMonthlyLOSBWPerLGA.error.message : "No error"}</p> */}
 
-      <p>Loading: {lengthAvgLOSandBWByLGA.loading ? "true" : "false"}</p>
+      {/* <p>Loading: {lengthAvgLOSandBWByLGA.loading ? "true" : "false"}</p>
       <p>Data:{" "}{lengthAvgLOSandBWByLGA.data ? JSON.stringify(lengthAvgLOSandBWByLGA.data) : "No data"}</p>
-      <p>Error: {lengthMonthlyLOSBWPerLGA.error ? lengthMonthlyLOSBWPerLGA.error.message : "No error"}</p>
+      <p>Error: {lengthMonthlyLOSBWPerLGA.error ? lengthMonthlyLOSBWPerLGA.error.message : "No error"}</p> */}
 
       {/* <p>Loading: {spendAllData.loading ? "true" : "false"}</p>
       <p>Data:{" "}{spendAllData.data ? JSON.stringify(spendAllData.data) : "No data"}</p>

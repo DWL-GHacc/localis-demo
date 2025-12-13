@@ -1,7 +1,7 @@
 // client/src/Pages/auth/Login.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { API_BASE } from "../../api/authClient";
+import { API_BASE } from "../../API/authClient";
 
 const Login = ({ setIsLoggedIn, onSuccess }) => {
   const navigate = useNavigate();
@@ -65,7 +65,9 @@ const Login = ({ setIsLoggedIn, onSuccess }) => {
       <form onSubmit={handleSubmit}>
         {/* email */}
         <div className="mb-3">
-          <label className="form-label" htmlFor="email">Email</label>
+          <label className="form-label" htmlFor="email">
+            Email
+          </label>
           <input
             id="email"
             name="email"
@@ -79,7 +81,9 @@ const Login = ({ setIsLoggedIn, onSuccess }) => {
 
         {/* password */}
         <div className="mb-3">
-          <label className="form-label" htmlFor="password">Password</label>
+          <label className="form-label" htmlFor="password">
+            Password
+          </label>
           <input
             id="password"
             name="password"

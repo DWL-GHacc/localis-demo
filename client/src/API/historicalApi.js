@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 
+const API_BASE = "http://localis-demo.onrender.com/"
+
 // Get all historcial data
 const getHistoricalAllData = async () => {
-  const url = "http://localhost:3000/api/historical";
+  const url = `http://localhost:3000/api/historical`;
   
   return fetch(url)
     .then((response) => response.json())

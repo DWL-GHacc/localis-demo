@@ -1,7 +1,7 @@
 // client/src/Pages/auth/Register.jsx
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { API_BASE } from "../../api/authClient";
+import { API_BASE } from "../../API/authClient";
 
 const Register = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -66,7 +66,9 @@ const Register = ({ onSuccess }) => {
       <form onSubmit={handleSubmit}>
         {/* Full name */}
         <div className="mb-3">
-          <label htmlFor="fullName" className="form-label">Full name</label>
+          <label htmlFor="fullName" className="form-label">
+            Full name
+          </label>
           <input
             type="text"
             id="fullName"
@@ -80,7 +82,9 @@ const Register = ({ onSuccess }) => {
 
         {/* Email */}
         <div className="mb-3">
-          <label htmlFor="email" className="form-label">Email address</label>
+          <label htmlFor="email" className="form-label">
+            Email address
+          </label>
           <input
             type="email"
             id="email"
@@ -97,7 +101,9 @@ const Register = ({ onSuccess }) => {
 
         {/* Password */}
         <div className="mb-3">
-          <label htmlFor="password" className="form-label">Password</label>
+          <label htmlFor="password" className="form-label">
+            Password
+          </label>
           <input
             type="password"
             id="password"

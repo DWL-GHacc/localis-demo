@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { authFetch } from "../../api/authClient";
+import { authFetch } from "../../API/authClient";
 import EditUserModal from "./EditUserModal";
 
 const UserAdmin = () => {
@@ -50,9 +50,7 @@ const UserAdmin = () => {
         const { response: pendingRes, data: pendingData } = pendingResult;
 
         if (!activeRes.ok || activeData.error) {
-          throw new Error(
-            activeData.message || "Failed to load active users"
-          );
+          throw new Error(activeData.message || "Failed to load active users");
         }
 
         if (!pendingRes.ok || pendingData.error) {
@@ -61,10 +59,7 @@ const UserAdmin = () => {
           );
         }
 
-        finalList = [
-          ...extractUsers(activeData),
-          ...extractUsers(pendingData),
-        ];
+        finalList = [...extractUsers(activeData), ...extractUsers(pendingData)];
       }
 
       // Optional: sort by email for consistent ordering
@@ -180,7 +175,7 @@ const UserAdmin = () => {
         setActionMessage(
           data?.message || data?.error || "Failed to update user"
         );
-          return;
+        return;
       }
 
       setActionMessage("User updated successfully");
@@ -200,7 +195,6 @@ const UserAdmin = () => {
   };
 
   return (
-    
     <div className="container py-4">
       <nav aria-label="breadcrumb">
         <ol className="breadcrumb">
@@ -292,9 +286,7 @@ const UserAdmin = () => {
                         <button
                           className="btn btn-sm btn-warning"
                           type="button"
-                          onClick={() =>
-                            handleActivateDeactivate(u.id, false)
-                          }
+                          onClick={() => handleActivateDeactivate(u.id, false)}
                         >
                           Deactivate
                         </button>
@@ -302,9 +294,7 @@ const UserAdmin = () => {
                         <button
                           className="btn btn-sm btn-success"
                           type="button"
-                          onClick={() =>
-                            handleActivateDeactivate(u.id, true)
-                          }
+                          onClick={() => handleActivateDeactivate(u.id, true)}
                         >
                           Activate
                         </button>
