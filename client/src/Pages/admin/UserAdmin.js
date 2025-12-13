@@ -30,7 +30,8 @@ const UserAdmin = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [pwError, setPwError] = useState("");
 
-  const isActiveFlag = (u) => u.is_active === 1 || u.is_active === true || u.is_active === "1";
+  const isActiveFlag = (u) =>
+    u.is_active === 1 || u.is_active === true || u.is_active === "1";
 
   // LOAD USERS
   const loadUsers = useCallback(async () => {
@@ -39,47 +40,22 @@ const UserAdmin = () => {
       setError(null);
       setActionMessage(null);
 
-      const extractUsers = (data) => (data && Array.isArray(data.users) ? data.users : []);
+      const extractUsers = (data) =>
+        data && Array.isArray(data.users) ? data.users : [];
       let finalList = [];
 
       if (filter === "active" || filter === "all") {
         const { response, data } = await authFetch("/api/users/active");
-        if (!response.ok || data?.error) throw new Error(data?.message || "Failed to load active users");
+        if (!response.ok || data?.error)
+          throw new Error(data?.message || "Failed to load active users");
         finalList = finalList.concat(extractUsers(data));
       }
 
       if (filter === "pending" || filter === "all") {
         const { response, data } = await authFetch("/api/users/pending");
-        if (!response.ok || data.error) {
-          throw new Error(data.message || "Failed to load pending users");
-        }
-        finalList = extractUsers(data);
-      } else if (filter === "all") {
-        // Fetch active + pending in parallel and merge
-        const [activeResult, pendingResult] = await Promise.all([
-          authFetch("/api/users/active"),
-          authFetch("/api/users/pending"),
-        ]);
-
-        const { response: activeRes, data: activeData } = activeResult;
-        const { response: pendingRes, data: pendingData } = pendingResult;
-
-        if (!activeRes.ok || activeData.error) {
-          throw new Error(
-            activeData.message || "Failed to load active users"
-          );
-        }
-
-        if (!pendingRes.ok || pendingData.error) {
-          throw new Error(
-            pendingData.message || "Failed to load pending users"
-          );
-        }
-
-        finalList = [
-          ...extractUsers(activeData),
-          ...extractUsers(pendingData),
-        ];
+        if (!response.ok || data?.error)
+          throw new Error(data?.message || "Failed to load pending users");
+        finalList = finalList.concat(extractUsers(data));
       }
 
       setUsers(finalList);
@@ -101,10 +77,15 @@ const UserAdmin = () => {
     const load = async () => {
       try {
         setLgaLoading(true);
-        const { response, data } = await authFetch("/api/length_data/distinct_lgas_length");
-        if (!response.ok || data?.Error) throw new Error(data?.Message || "Failed to load LGA list");
+        const { response, data } = await authFetch(
+          "/api/length_data/distinct_lgas_length"
+        );
+        if (!response.ok || data?.Error)
+          throw new Error(data?.Message || "Failed to load LGA list");
 
-        const list = (data?.Data || []).map((row) => row.lga_name).filter(Boolean);
+        const list = (data?.Data || [])
+          .map((row) => row.lga_name)
+          .filter(Boolean);
         setAllLgas(list);
       } catch (err) {
         console.error(err);
@@ -134,30 +115,39 @@ const UserAdmin = () => {
   const saveLgaAccess = async ({ lgas }) => {
     if (!lgaUser) return;
 
-    const { response, data } = await authFetch(`/api/users/${lgaUser.id}/lgas`, {
-      method: "PUT",
-      body: JSON.stringify({ lgas }),
-    });
+    const { response, data } = await authFetch(
+      `/api/users/${lgaUser.id}/lgas`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ lgas }),
+      }
+    );
 
     if (!response.ok || data?.error) {
       alert(data?.message || "Failed to update LGA access");
       return;
     }
 
-    setActionMessage(`LGA access updated (${data?.assignedCount ?? lgas.length} selected)`);
+    setActionMessage(
+      `LGA access updated (${data?.assignedCount ?? lgas.length} selected)`
+    );
     setShowLgaModal(false);
     setLgaUser(null);
   };
 
   // ACTIVATE / DEACTIVATE (NO modal opening)
   const handleActivateDeactivate = async (id, makeActive) => {
-    const endpoint = makeActive ? `/api/users/${id}/activate` : `/api/users/${id}/deactivate`;
+    const endpoint = makeActive
+      ? `/api/users/${id}/activate`
+      : `/api/users/${id}/deactivate`;
 
     const { response, data } = await authFetch(endpoint, { method: "PATCH" });
 
     if (!response.ok || data?.error) {
       if (makeActive && data?.code === "LGA_REQUIRED") {
-        setActionMessage(data?.message || "Cannot activate until LGA access is assigned.");
+        setActionMessage(
+          data?.message || "Cannot activate until LGA access is assigned."
+        );
       } else {
         setActionMessage(data?.message || "Failed to update user state");
       }
@@ -172,7 +162,9 @@ const UserAdmin = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure?")) return;
 
-    const { response, data } = await authFetch(`/api/users/${id}`, { method: "DELETE" });
+    const { response, data } = await authFetch(`/api/users/${id}`, {
+      method: "DELETE",
+    });
     if (!response.ok || data?.error) {
       setActionMessage(data?.message || "Failed to delete user");
       return;
@@ -197,17 +189,18 @@ const UserAdmin = () => {
   const handleUpdateUser = async (e) => {
     e.preventDefault();
 
-    const { response, data } = await authFetch(`/api/users/${editingUser.id}/update`, {
-      method: "PATCH",
-      body: JSON.stringify(editForm),
-    });
-
-      if (!response.ok || data?.error) {
-        setActionMessage(
-          data?.message || data?.error || "Failed to update user"
-        );
-          return;
+    const { response, data } = await authFetch(
+      `/api/users/${editingUser.id}/update`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(editForm),
       }
+    );
+
+    if (!response.ok || data?.error) {
+      setActionMessage(data?.message || "Failed to update user");
+      return;
+    }
 
     setActionMessage("User updated successfully");
     setShowEditModal(false);
@@ -226,13 +219,18 @@ const UserAdmin = () => {
   const handlePasswordReset = async (e) => {
     e.preventDefault();
 
-    if (newPassword.length < 8) return setPwError("Password must be 8 characters minimum");
-    if (newPassword !== confirmPassword) return setPwError("Passwords do not match");
+    if (newPassword.length < 8)
+      return setPwError("Password must be 8 characters minimum");
+    if (newPassword !== confirmPassword)
+      return setPwError("Passwords do not match");
 
-    const { response, data } = await authFetch(`/api/users/${pwUser.id}/password`, {
-      method: "PATCH",
-      body: JSON.stringify({ password: newPassword }),
-    });
+    const { response, data } = await authFetch(
+      `/api/users/${pwUser.id}/password`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ password: newPassword }),
+      }
+    );
 
     if (!response.ok || data?.error) {
       setPwError(data?.message || "Failed to update password");
@@ -248,13 +246,28 @@ const UserAdmin = () => {
       <h1 className="h4 mb-3">User Administration</h1>
 
       <div className="btn-group mb-3">
-        <button className={`btn btn-outline-primary ${filter === "active" ? "active" : ""}`} onClick={() => setFilter("active")}>
+        <button
+          className={`btn btn-outline-primary ${
+            filter === "active" ? "active" : ""
+          }`}
+          onClick={() => setFilter("active")}
+        >
           Active
         </button>
-        <button className={`btn btn-outline-primary ${filter === "pending" ? "active" : ""}`} onClick={() => setFilter("pending")}>
+        <button
+          className={`btn btn-outline-primary ${
+            filter === "pending" ? "active" : ""
+          }`}
+          onClick={() => setFilter("pending")}
+        >
           Pending
         </button>
-        <button className={`btn btn-outline-primary ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>
+        <button
+          className={`btn btn-outline-primary ${
+            filter === "all" ? "active" : ""
+          }`}
+          onClick={() => setFilter("all")}
+        >
           All
         </button>
       </div>
@@ -264,81 +277,133 @@ const UserAdmin = () => {
       {actionMessage && <div className="alert alert-info">{actionMessage}</div>}
 
       {!loading && !error && users.length > 0 && (
-        <div className="table-responsive">
-          <table className="table table-sm table-striped align-middle">
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Name</th>
-                <th>Role</th>
-                <th>Active</th>
-                <th>Actions</th>
+        <Table striped bordered hover size="sm">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th style={{ minWidth: "260px" }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u.id}>
+                <td>{u.email}</td>
+                <td>{u.full_name}</td>
+                <td>{u.role}</td>
+                <td>
+                  {isActiveFlag(u) ? (
+                    <Badge bg="success">Active</Badge>
+                  ) : (
+                    <Badge bg="secondary">Pending</Badge>
+                  )}
+                </td>
+
+                <td className="d-flex gap-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="outline-primary"
+                    onClick={() => openEditModal(u)}
+                  >
+                    Edit
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => openLgaModal(u)}
+                    disabled={lgaLoading}
+                  >
+                    LGAs
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => openPasswordModal(u)}
+                  >
+                    Update PW
+                  </Button>
+
+                  {isActiveFlag(u) ? (
+                    <Button
+                      size="sm"
+                      variant="warning"
+                      onClick={() => handleActivateDeactivate(u.id, false)}
+                    >
+                      Deactivate
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="success"
+                      onClick={() => handleActivateDeactivate(u.id, true)}
+                    >
+                      Activate
+                    </Button>
+                  )}
+
+                  <Button
+                    size="sm"
+                    variant="outline-danger"
+                    onClick={() => handleDelete(u.id)}
+                  >
+                    Delete
+                  </Button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => {
-                const active = isActiveFlag(u);
-                return (
-                  <tr key={u.id}>
-                    <td>{u.email}</td>
-                    <td>{u.full_name}</td>
-                    <td>
-                      <span className={getRoleBadgeClass(u.role)}>
-                        {u.role || "unknown"}
-                      </span>
-                    </td>
-                    <td>
-                      {active ? (
-                        <span className="badge bg-success">Active</span>
-                      ) : (
-                        <span className="badge bg-secondary">Pending</span>
-                      )}
-                    </td>
-                    <td className="d-flex gap-2 flex-wrap">
-                      <button
-                        className="btn btn-sm btn-outline-primary"
-                        type="button"
-                        onClick={() => openEditModal(u)}
-                      >
-                        Edit
-                      </button>
-                      {active ? (
-                        <button
-                          className="btn btn-sm btn-warning"
-                          type="button"
-                          onClick={() =>
-                            handleActivateDeactivate(u.id, false)
-                          }
-                        >
-                          Deactivate
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-sm btn-success"
-                          type="button"
-                          onClick={() =>
-                            handleActivateDeactivate(u.id, true)
-                          }
-                        >
-                          Activate
-                        </button>
-                      )}
-                      <button
-                        className="btn btn-sm btn-outline-danger"
-                        type="button"
-                        onClick={() => handleDelete(u.id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </Table>
       )}
 
+      {/* PASSWORD RESET MODAL */}
+      <Modal show={showPwModal} onHide={() => setShowPwModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Reset Password {pwUser && `(${pwUser.email})`}
+          </Modal.Title>
+        </Modal.Header>
+
+        <Form onSubmit={handlePasswordReset}>
+          <Modal.Body>
+            <Form.Group className="mb-3">
+              <Form.Label>New Password</Form.Label>
+              <Form.Control
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Confirm Password</Form.Label>
+              <Form.Control
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </Form.Group>
+
+            {pwError && <div className="text-danger small mt-2">{pwError}</div>}
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowPwModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              Update
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      {/* EDIT USER MODAL */}
       <EditUserModal
         show={showEditModal}
         onHide={() => setShowEditModal(false)}
