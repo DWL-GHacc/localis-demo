@@ -22,7 +22,7 @@ import UserAdmin from "./Pages/admin/UserAdmin";
 import PrivateRoutes from "./routes/PrivateRoutes";
 import Footer from "./Components/footer";
 import "./index.css";
-import Admin from "./Pages/Admin";
+//import Admin from "./Pages/Admin";
 import FeedbackAdmin from "./Pages/admin/FeedbackAdmin";
 import Demo from "./Pages/Demo";
 
@@ -99,7 +99,7 @@ function App() {
               <Route path="/dashboard/spend" element={<Spend />} />
               <Route path="/dashboard/compare-occupancy" element={<CompareOccupancy />} />
 
-              <Route path="/admin" element={<Admin />} />
+
               <Route path="/admin/users" element={<UserAdmin />} />
               <Route path="/admin/feedback" element={<FeedbackAdmin />} />
             </Route>

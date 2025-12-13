@@ -1,10 +1,14 @@
-// client/src/Components/header.jsx
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Navbar, Nav, Container, Button } from "react-bootstrap";
 
-const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => {
+const Header = ({
+  isLoggedIn,
+  onLogOut,
+  role,
+  onShowLogin,
+  onShowRegister,
+}) => {
   const navigate = useNavigate();
   const isAdmin = role === "admin";
 
@@ -18,43 +22,47 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
   return (
     <Navbar bg="light" variant="light" expand="lg" className="mb-3">
       <Container>
-        <Navbar.Brand
-            as={Link}
-            to="/"
-            className="d-flex p-2"
-          >
-            <img
-              src="/images/localis-dih-blk.svg"
-              alt="Localis Destination Insight Hub logo"
-              width="300"
-              height="auto"
-            />
-          </Navbar.Brand>
+        {/* LOGO */}
+        <Navbar.Brand as={Link} to="/" className="d-flex p-2">
+          <img
+            src="/images/localis-dih-blk.svg"
+            alt="Localis Destination Insight Hub logo"
+            width="300"
+            height="auto"
+          />
+        </Navbar.Brand>
 
         <Navbar.Toggle aria-controls="main-navbar-nav" />
         <Navbar.Collapse id="main-navbar-nav">
+          {/* LEFT SIDE NAV */}
           <Nav className="me-auto">
             {/* Always visible */}
             <Nav.Link as={Link} to="/">
               Home
             </Nav.Link>
 
-            {/* Dashboard visible only when logged in */}
+            {/* Dashboard (logged in users) */}
             {isLoggedIn && (
               <Nav.Link as={Link} to="/dashboard">
                 Dashboard
               </Nav.Link>
             )}
 
-            {/* ADMIN HUB LINK */}
+            {/* ADMIN LINKS (admins only) */}
             {isLoggedIn && isAdmin && (
-              <Nav.Link as={Link} to="/admin">
-                Admin
-              </Nav.Link>
+              <>
+                <Nav.Link as={Link} to="/admin/users">
+                  User Admin
+                </Nav.Link>
+
+                <Nav.Link as={Link} to="/admin/feedback">
+                  Feedback Admin
+                </Nav.Link>
+              </>
             )}
           </Nav>
 
-          {/* RIGHT SIDE — Login / Register or Logout */}
+          {/* RIGHT SIDE — Auth buttons */}
           <Nav className="ms-auto">
             {!isLoggedIn && (
               <>
@@ -81,7 +89,9 @@ const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => 
               <>
                 <Navbar.Text className="me-3">
                   Signed in as{" "}
-                  <strong>{localStorage.getItem("userName") || "User"}</strong>
+                  <strong>
+                    {localStorage.getItem("userName") || "User"}
+                  </strong>
                 </Navbar.Text>
 
                 <Button
