@@ -1051,7 +1051,7 @@ export default function AccomodationInsights() {
             </Form>
             {params.lga && params.year && renderYearlyResults()}
           </Tab>
-          <Tab eventKey="seasonal_insights" title="Seasonal Insights">
+         <Tab eventKey="seasonal_insights" title="Seasonal Insights">
             <Form onSubmit={handleSubmit}>
               <Row className="mb-3">
                 <SelectField
@@ -1090,7 +1090,7 @@ export default function AccomodationInsights() {
             </Form>
             {params.lga && renderSeasonalInsightsResults()}
           </Tab>
-          <Tab eventKey="compare_regions" title="Compare Regions">
+          {lgaList.length > 1 ? <Tab eventKey="compare_regions" title="Compare Regions">
             <Form onSubmit={handleSubmit}>
               <Row className="mb-3">
                 <SelectField
@@ -1135,8 +1135,8 @@ export default function AccomodationInsights() {
               params.year &&
               (params.lga === "All Regions" || params.lga2) &&
               renderCompareLgaResults()}
-          </Tab>
-          <Tab eventKey="Ranking" title="Peformance Ranking">
+          </Tab> : null}
+          {lgaList.length > 1 ? <Tab eventKey="Ranking" title="Peformance Ranking">
             <Form onSubmit={handleSubmit}>
               <Row className="mb-3">
                 <SelectField
@@ -1212,7 +1212,7 @@ export default function AccomodationInsights() {
                 ),
                 "Booking Window (Days)"
               )}
-          </Tab>
+          </Tab> : null}
         </Tabs>
       </Container>
     </div>
