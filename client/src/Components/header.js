@@ -1,14 +1,8 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Navbar, Nav, Container, Button } from "react-bootstrap";
+import { Navbar, Nav, Container, Button, NavDropdown } from "react-bootstrap";
 
-const Header = ({
-  isLoggedIn,
-  onLogOut,
-  role,
-  onShowLogin,
-  onShowRegister,
-}) => {
+const Header = ({ isLoggedIn, onLogOut, role, onShowLogin, onShowRegister }) => {
   const navigate = useNavigate();
   const isAdmin = role === "admin";
 
@@ -22,7 +16,6 @@ const Header = ({
   return (
     <Navbar bg="light" variant="light" expand="lg" className="mb-3">
       <Container>
-        {/* LOGO */}
         <Navbar.Brand as={Link} to="/" className="d-flex p-2">
           <img
             src="/images/localis-dih-blk.svg"
@@ -34,35 +27,33 @@ const Header = ({
 
         <Navbar.Toggle aria-controls="main-navbar-nav" />
         <Navbar.Collapse id="main-navbar-nav">
-          {/* LEFT SIDE NAV */}
           <Nav className="me-auto">
             {/* Always visible */}
             <Nav.Link as={Link} to="/">
               Home
             </Nav.Link>
 
-            {/* Dashboard (logged in users) */}
+            {/* Dashboard visible only when logged in */}
             {isLoggedIn && (
               <Nav.Link as={Link} to="/dashboard">
                 Dashboard
               </Nav.Link>
             )}
 
-            {/* ADMIN LINKS (admins only) */}
+            {/* ADMIN DROPDOWN (admins only) */}
             {isLoggedIn && isAdmin && (
-              <>
-                <Nav.Link as={Link} to="/admin/users">
+              <NavDropdown title="Admin" id="admin-nav-dropdown">
+                <NavDropdown.Item as={Link} to="/admin/users">
                   User Admin
-                </Nav.Link>
-
-                <Nav.Link as={Link} to="/admin/feedback">
+                </NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/admin/feedback">
                   Feedback Admin
-                </Nav.Link>
-              </>
+                </NavDropdown.Item>
+              </NavDropdown>
             )}
           </Nav>
 
-          {/* RIGHT SIDE — Auth buttons */}
+          {/* RIGHT SIDE — Login / Register or Logout */}
           <Nav className="ms-auto">
             {!isLoggedIn && (
               <>
@@ -75,11 +66,7 @@ const Header = ({
                   Log in
                 </Button>
 
-                <Button
-                  variant="dark"
-                  size="sm"
-                  onClick={onShowRegister}
-                >
+                <Button variant="dark" size="sm" onClick={onShowRegister}>
                   Register
                 </Button>
               </>
@@ -89,16 +76,10 @@ const Header = ({
               <>
                 <Navbar.Text className="me-3">
                   Signed in as{" "}
-                  <strong>
-                    {localStorage.getItem("userName") || "User"}
-                  </strong>
+                  <strong>{localStorage.getItem("userName") || "User"}</strong>
                 </Navbar.Text>
 
-                <Button
-                  variant="dark"
-                  size="sm"
-                  onClick={handleLogoutClick}
-                >
+                <Button variant="dark" size="sm" onClick={handleLogoutClick}>
                   Log out
                 </Button>
               </>
