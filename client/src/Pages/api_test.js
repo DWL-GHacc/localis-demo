@@ -8,45 +8,52 @@ import {
   useHistoricalSingleLGAHistOccLOS,
 } from "../API/historicalApi";
 import {
-    useLengthAllData,
-    useLengthDistinctLGAs,
-    useLengthDataRange,
-    useLengthAverageLOSBWPerLGA,
-    useLengthAverageLOSPeroid,
-    useLengthAverageLOSBWPerLGAOverTime,
-    useLengthAverageRates,
-    useLengthMonthlyLOSBWPerLGA
+  useLengthAllData,
+  useLengthDistinctLGAs,
+  useLengthDataRange,
+  useLengthAverageLOSBWPerLGA,
+  useLengthAverageLOSPeroid,
+  useLengthAverageLOSBWPerLGAOverTime,
+  useLengthAverageRates,
+  useLengthMonthlyLOSBWPerLGA,
+  useLengthAvgLOSandBWByLGA
 } from "../API/lengthApi";
-import { 
-    useSpendAllData,
-    useSpendDistinctLGAs,
-    useSpendDataRange,
-    useSpendCategories,
-    useSpendRegions,
-    useSpendSumByCategories,
-    useSpendIntensityAllRegions,
-    useSpendSumByRegions,
-    useSpendSumByCategoriesPerRegion,
-    useSpendMonthlySumPerRegion
- } from "../API/spendApi";
-
+import {
+  useSpendAllData,
+  useSpendDistinctLGAs,
+  useSpendDataRange,
+  useSpendCategories,
+  useSpendRegions,
+  useSpendSumByCategories,
+  useSpendIntensityAllRegions,
+  useSpendSumByRegions,
+  useSpendSumByCategoriesPerRegion,
+  useSpendMonthlySumPerRegion,
+} from "../API/spendApi";
 
 export default function ApiTest() {
   const historicalAllData = useHistoricalAllData();
   const historicalRangeData = useHistoricalDataRange();
   const historicalAverageRates = useHistoricalAverageRates();
   const historicalDistinctLGAs = useHistoricalDistinctLGAs();
-  const historicalMonthlyOccADRPerLGA = useHistoricalMonthlyOccupancyADRPerLGA();
-  const historicalSingleLGAHistOccLOS = useHistoricalSingleLGAHistOccLOS("Cairns"); // for testing
+  const historicalMonthlyOccADRPerLGA =
+    useHistoricalMonthlyOccupancyADRPerLGA();
+  const historicalSingleLGAHistOccLOS =
+    useHistoricalSingleLGAHistOccLOS("Gold Coast"); // for testing
 
   const lengthAllData = useLengthAllData();
   const lengthDistinctLGAs = useLengthDistinctLGAs();
   const lengthDataRange = useLengthDataRange();
   const lengthAverageLOSBWPerLGA = useLengthAverageLOSBWPerLGA();
-  const lengthAverageLOSPeroid = useLengthAverageLOSPeroid("2023-01-01", "2023-12-31"); // for testing
-  const lengthAverageLOSBWPerLGAOverTime = useLengthAverageLOSBWPerLGAOverTime("Gold Coast"); // for testing
+  const lengthAverageLOSPeroid = useLengthAverageLOSPeroid(
+    "2023-01-01",
+    "2023-12-31"
+  ); // for testing
+  const lengthAverageLOSBWPerLGAOverTime =
+    useLengthAverageLOSBWPerLGAOverTime("Gold Coast"); // for testing
   const lengthAverageRates = useLengthAverageRates();
   const lengthMonthlyLOSBWPerLGA = useLengthMonthlyLOSBWPerLGA();
+  const lengthAvgLOSandBWByLGA = useLengthAvgLOSandBWByLGA("Gold Coast") // for testing
 
   const spendAllData = useSpendAllData();
   const spendDistinctLGAs = useSpendDistinctLGAs();
@@ -56,7 +63,8 @@ export default function ApiTest() {
   const spendSumByCotegories = useSpendSumByCategories();
   const spendIntensityAllRegions = useSpendIntensityAllRegions();
   const spendSumByRegions = useSpendSumByRegions();
-  const spendSumByCategoriesPerRegion = useSpendSumByCategoriesPerRegion("Cairns"); // for testing
+  const spendSumByCategoriesPerRegion =
+    useSpendSumByCategoriesPerRegion("Cairns"); // for testing
   const spendMonthlySumPerRegion = useSpendMonthlySumPerRegion();
 
   return (
@@ -67,9 +75,9 @@ export default function ApiTest() {
       <p>Data:{" "}{.data ? JSON.stringify(.data) : "No data"}</p>
       <p>Error: {.error ? .error.message : "No error"}</p> */}
 
-      {/* <p>Loading: {historicalAllData.loading ? "true" : "false"}</p>
+      <p>Loading: {historicalAllData.loading ? "true" : "false"}</p>
       <p>Data: {historicalAllData.data ? JSON.stringify(historicalAllData.data) : "No data"}</p>
-      <p>Error: {historicalAllData.error ? historicalAllData.error.message : "No error"}</p> */}
+      <p>Error: {historicalAllData.error ? historicalAllData.error.message : "No error"}</p>
 
       {/* <p>Loading: {historicalRangeData.loading ? "true" : "false"}</p>
       <p>Data: {historicalRangeData.data ? JSON.stringify(historicalRangeData.data) : "No data"}</p>
@@ -123,6 +131,10 @@ export default function ApiTest() {
       <p>Data:{" "}{lengthMonthlyLOSBWPerLGA.data ? JSON.stringify(lengthMonthlyLOSBWPerLGA.data) : "No data"}</p>
       <p>Error: {lengthMonthlyLOSBWPerLGA.error ? lengthMonthlyLOSBWPerLGA.error.message : "No error"}</p> */}
 
+      {/* <p>Loading: {lengthAvgLOSandBWByLGA.loading ? "true" : "false"}</p>
+      <p>Data:{" "}{lengthAvgLOSandBWByLGA.data ? JSON.stringify(lengthAvgLOSandBWByLGA.data) : "No data"}</p>
+      <p>Error: {lengthMonthlyLOSBWPerLGA.error ? lengthMonthlyLOSBWPerLGA.error.message : "No error"}</p> */}
+
       {/* <p>Loading: {spendAllData.loading ? "true" : "false"}</p>
       <p>Data:{" "}{spendAllData.data ? JSON.stringify(spendAllData.data) : "No data"}</p>
       <p>Error: {spendAllData.error ? spendAllData.error.message : "No error"}</p> */}
@@ -159,9 +171,19 @@ export default function ApiTest() {
       <p>Data:{" "}{spendSumByCategoriesPerRegion.data ? JSON.stringify(spendSumByCategoriesPerRegion.data) : "No data"}</p>
       <p>Error: {spendSumByCategoriesPerRegion.error ? spendSumByCategoriesPerRegion.error.message : "No error"}</p> */}
 
-      <p>Loading: {spendMonthlySumPerRegion.loading ? "true" : "false"}</p>
-      <p>Data:{" "}{spendMonthlySumPerRegion.data ? JSON.stringify(spendMonthlySumPerRegion.data) : "No data"}</p>
-      <p>Error: {spendMonthlySumPerRegion.error ? spendMonthlySumPerRegion.error.message : "No error"}</p>
+      {/* <p>Loading: {spendMonthlySumPerRegion.loading ? "true" : "false"}</p>
+      <p>
+        Data:{" "}
+        {spendMonthlySumPerRegion.data
+          ? JSON.stringify(spendMonthlySumPerRegion.data)
+          : "No data"}
+      </p>
+      <p>
+        Error:{" "}
+        {spendMonthlySumPerRegion.error
+          ? spendMonthlySumPerRegion.error.message
+          : "No error"}
+      </p> */}
     </div>
   );
 }

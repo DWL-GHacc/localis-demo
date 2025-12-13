@@ -109,7 +109,7 @@ router.get("/ave_LOS_period", async (req, res, next) => {
 });
 
 // Get average LOS and BW by LGA over time
-router.get("/ave_LOS_by_LGA", async (req, res, next) => {
+router.get("/ave_LOS_BW_by_LGA", async (req, res, next) => {
     const lga = req.query.lga_name;
     console.log(`LGA: ${lga}`);
 

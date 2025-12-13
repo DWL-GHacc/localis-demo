@@ -8,7 +8,7 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 import Header from "./Components/header";
 import Home from "./Pages/home";
-import CompareOccupancy from "./Pages/compare_occupancy";
+import AccommodationInSights from "./Pages/accomodation_insights";
 import ApiTest from "./Pages/api_test";
 import Dashboard from "./Pages/Dashboard";
 import Spend from "./Pages/spend";
@@ -110,10 +110,6 @@ function App() {
             <Route element={<PrivateRoutes />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/spend" element={<Spend />} />
-              <Route
-                path="/dashboard/compare-occupancy"
-                element={<CompareOccupancy />}
-              />
               <Route path="/admin/users" element={<UserAdmin />} />
               <Route path="/admin/feedback" element={<FeedbackAdmin />} />
             </Route>
@@ -122,8 +118,11 @@ function App() {
               path="*"
               element={<div className="text-muted p-4">Page not Found</div>}
             />
-
-            <Route path="/api_test" element={<ApiTest />} />
+            <Route
+              path="/dashboard/accommodation"
+              element={<AccommodationInSights />}
+            ></Route>
+            <Route path="/api_test" element={<ApiTest />}></Route>
           </Routes>
         </Container>
 
